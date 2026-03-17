@@ -1,73 +1,72 @@
-# React + TypeScript + Vite
+# Peak Pacer ⛰️
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**动态越野配速手环** — 越野跑赛事配速预测与分析工具
 
-Currently, two official plugins are available:
+根据赛道 GPX 文件、选手能力（马拉松成绩 / iTRA 积分）以及海拔爬升数据，智能预测分段配速与完赛时间，帮助越野跑者科学备赛。
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 核心功能
 
-## React Compiler
+- **GPX 赛道解析** — 导入 GPX 文件，自动提取轨迹、打卡点（CP）和海拔数据；无打卡点时自动按 10km 切分
+- **智能配速预测** — 基于坡度系数、超马疲劳因子、iTRA 越野能力的多因子配速模型，经真实比赛数据校准
+- **交互式地图** — Leaflet 地图支持街道 / 地形 / 卫星三种底图，赛道按坡度着色（红色上坡、蓝色下坡）
+- **海拔剖面图** — 可视化全程海拔变化与 CP 位置
+- **分段详情表** — 每个 CP 间的距离、爬升、配速、用时一目了然，高难度赛段高亮提示
+- **配速手环** — 紧凑的打印版配速表，比赛时绑在手腕上随时查看
+- **历史天气预报** — 基于 Open-Meteo 历史数据，分析赛事日期的气温、降水、风力，并给出装备建议
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 配速模型亮点
 
-## Expanding the ESLint configuration
+| 因子 | 说明 |
+|------|------|
+| 坡度系数 | 上坡 20% → 3.6 倍等效平路距离；下坡超过 12% 触发制动惩罚 |
+| 超马疲劳 | 超过 42.195km 后线性累积，80km 处约慢 38% |
+| 越野能力 | iTRA 积分越高，技术地形效率越好 |
+| 目标时间 | 可设定目标完赛时间，按相对难度等比缩放各段配速 |
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 内置赛事
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+开箱即用，自带多条赛道 GPX 数据：
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- 浙里昌硕大师之路 40K
+- 杭州青芝坞 30K
+- 黄岩九峰越野大师赛
+- 徽州古城百公里
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+也可上传自己的 GPX 文件进行分析。
+
+## 技术栈
+
+- **React 19** + **TypeScript 5.9** + **Vite 7**
+- **Tailwind CSS 4** — 原子化样式
+- **Leaflet** + **react-leaflet** — 交互式地图
+- **Recharts** — 海拔剖面图表
+- **fast-xml-parser** — GPX 文件解析
+- **Open-Meteo API** — 历史天气数据（无需 API Key）
+- **Vitest** — 单元测试，用真实比赛数据校准模型
+
+## 快速开始
+
+```bash
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm run dev
+
+# 构建生产版本
+npm run build
+
+# 运行测试
+npm run test
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 部署
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+项目为纯前端应用，可部署到 Cloudflare Pages、Vercel、Netlify 等平台：
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- **Build command**: `npm run build`
+- **Output directory**: `dist`
+
+## License
+
+MIT
