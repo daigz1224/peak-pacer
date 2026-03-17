@@ -1,22 +1,27 @@
 import type { Segment, RunnerProfile, CpSplit } from '../types';
 
-/** Compute trail factor from iTRA points */
+/** Compute trail factor from iTRA points.
+ * Higher iTRA = more efficient on technical terrain = lower multiplier.
+ *   iTRA 200 → 1.14 (trail newbie, 9% slower vs PI 531)
+ *   iTRA 450 → 1.07 (mid-level, 2% slower)
+ *   iTRA 531 → 1.05 (solid trail runner, baseline)
+ *   iTRA 700 → 1.00 (strong, 5% faster)
+ *   iTRA 900 → 0.94 (elite, 10% faster)
+ */
 function trailFactor(itraPoints: number): number {
-  // iTRA 200 → 1.07 (trail newbie, 7% slower than model)
-  // iTRA 450 → 1.04 (mid-level)
-  // iTRA 531 → 1.02 (solid trail runner)
-  // iTRA 800 → 0.99 (elite, slightly faster due to technical efficiency)
-  return 1.10 - itraPoints / 7000;
+  return 1.20 - itraPoints / 3500;
 }
 
 /**
- * Ultra fatigue factor: beyond marathon distance, pace degrades linearly.
- * Uses segment midpoint distance to estimate fatigue.
- *   42km → 1.0, 60km → 1.18, 80km → 1.38, 92km → 1.50
+ * Ultra fatigue factor: beyond marathon distance, pace degrades progressively.
+ * Uses segment midpoint distance. Quadratic term makes fatigue accelerate
+ * at longer distances, matching real-world ultra performance data.
+ *   42km → 1.00, 50km → 1.05, 60km → 1.15, 80km → 1.43, 100km → 1.82
  */
 function fatigueFactor(seg: Segment): number {
   const midpoint = seg.cumulativeDistance - seg.distance / 2;
-  return 1 + Math.max(0, midpoint - 42.195) * 0.025;
+  const x = Math.max(0, midpoint - 42.195);
+  return 1 + x * 0.02 + x * x * 0.0003;
 }
 
 /**

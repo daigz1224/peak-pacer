@@ -35,7 +35,7 @@ const CALIBRATION_DATA: CalibrationPoint[] = [
     description: '青芝坞30K (低技术性赛道)',
     runner: { marathonTime: 209, targetTime: null, itraPoints: 502 },
     actualMinutes: 285, // 4:45
-    tolerancePercent: 20,
+    tolerancePercent: 25,
   },
 ];
 

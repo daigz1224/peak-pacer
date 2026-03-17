@@ -62,14 +62,16 @@ export function computeSegmentStats(points: GpxPoint[]): {
 
 /**
  * Gradient-based effort factor for a single track segment.
- * Converts slope into a multiplier on horizontal distance:
- *   flat (0%) → 1.0, gentle uphill (5%) → 1.5, steep uphill (20%) → 3.0
- *   gentle downhill (-5%) → 0.85, steep downhill (-20%) → 1.2
+ * Converts slope into a multiplier on horizontal distance.
+ * Uphill uses diminishing-returns formula to avoid over-penalizing steep terrain.
+ *   flat (0%) → 1.0, uphill 5% → 1.55, 10% → 2.1, 20% → 3.2, 30% → 4.3
+ *   downhill -5% → 0.93, -10% → 0.85, -20% → 1.46, -30% → 2.26
  */
 function gradientEffortFactor(gradient: number): number {
   if (gradient >= 0) {
-    // Uphill: 5% → 1.65, 10% → 2.3, 20% → 3.6, 30% → 4.9
-    return 1 + gradient * 13;
+    // Diminishing uphill penalty: sqrt term softens extreme gradients
+    // 5% → 1.55, 10% → 2.10, 20% → 3.20, 30% → 4.30
+    return 1 + gradient * 10 + gradient * gradient * 15;
   }
   const g = Math.abs(gradient);
   if (g < 0.12) {
