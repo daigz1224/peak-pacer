@@ -4,6 +4,8 @@ import tailwindcss from '@tailwindcss/vite'
 import fs from 'node:fs'
 import path from 'node:path'
 
+import { cloudflare } from "@cloudflare/vite-plugin";
+
 // Auto-discover GPX files in public/files/ at build time
 function gpxManifestPlugin() {
   const virtualId = 'virtual:gpx-files'
@@ -27,5 +29,5 @@ function gpxManifestPlugin() {
 }
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), gpxManifestPlugin()],
+  plugins: [react(), tailwindcss(), gpxManifestPlugin(), cloudflare()],
 })
