@@ -21,7 +21,7 @@ function HelpTip({ text }: { text: string }) {
     <span className="relative inline-block ml-1">
       <button
         type="button"
-        className="w-4 h-4 inline-flex items-center justify-center rounded-full bg-gray-200 text-gray-500 text-[10px] font-bold leading-none hover:bg-gray-300 cursor-help"
+        className="w-4 h-4 inline-flex items-center justify-center rounded-full bg-slate-200 text-slate-500 text-[10px] font-bold leading-none hover:bg-slate-300 cursor-help"
         onClick={() => setShow(!show)}
         onMouseEnter={() => setShow(true)}
         onMouseLeave={() => setShow(false)}
@@ -29,7 +29,7 @@ function HelpTip({ text }: { text: string }) {
         ?
       </button>
       {show && (
-        <div className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2.5 py-1.5 text-xs text-gray-700 bg-white border border-gray-200 rounded-lg shadow-lg whitespace-nowrap">
+        <div className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2.5 py-1.5 text-xs text-slate-700 bg-white border border-slate-200 rounded-lg shadow-lg whitespace-nowrap">
           {text}
         </div>
       )}
@@ -45,51 +45,87 @@ export function RaceSummary({
   predictedTime,
   cpCount,
 }: Props) {
-  // ITRA effort: distance(km) + gain(m)/100
   const itraEffort = Math.round(totalDistance + totalGain / 100);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <h2 className="text-lg font-bold text-gray-900 mb-3">{name}</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
-        <div>
-          <div className="text-gray-500">总距离</div>
-          <div className="text-xl font-bold text-gray-900">
+    <div className="bg-white rounded-xl shadow-sm p-5">
+      <div className="flex items-center gap-2 mb-1">
+        <svg viewBox="0 0 20 16" className="w-5 h-4 text-emerald-500 shrink-0" fill="currentColor">
+          <path d="M1,15 L5,5 L7,9 L10,2 L13,9 L15,5 L19,15 Z" />
+        </svg>
+        <h2 className="text-lg font-bold text-slate-900">{name}</h2>
+      </div>
+      <div className="h-px bg-gradient-to-r from-emerald-500/40 to-transparent mb-4" />
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+        <div className="bg-slate-50 rounded-lg p-3 border-l-4 border-slate-400">
+          <div className="text-slate-500 flex items-center gap-1.5">
+            <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M2 8h12M10 4l4 4-4 4" />
+            </svg>
+            总距离
+          </div>
+          <div className="text-xl font-bold text-slate-900 mt-1">
             {totalDistance.toFixed(1)} <span className="text-sm font-normal">km</span>
           </div>
         </div>
-        <div>
-          <div className="text-gray-500">累计爬升</div>
-          <div className="text-xl font-bold text-emerald-600">
+
+        <div className="bg-slate-50 rounded-lg p-3 border-l-4 border-emerald-500">
+          <div className="text-slate-500 flex items-center gap-1.5">
+            <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M8 12V4M4 8l4-4 4 4" />
+            </svg>
+            累计爬升
+          </div>
+          <div className="text-xl font-bold text-emerald-600 mt-1">
             +{totalGain} <span className="text-sm font-normal">m</span>
           </div>
         </div>
-        <div>
-          <div className="text-gray-500">累计下降</div>
-          <div className="text-xl font-bold text-blue-600">
+
+        <div className="bg-slate-50 rounded-lg p-3 border-l-4 border-sky-500">
+          <div className="text-slate-500 flex items-center gap-1.5">
+            <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M8 4v8M4 8l4 4 4-4" />
+            </svg>
+            累计下降
+          </div>
+          <div className="text-xl font-bold text-sky-600 mt-1">
             -{totalLoss} <span className="text-sm font-normal">m</span>
           </div>
         </div>
-        <div>
-          <div className="text-gray-500">
+
+        <div className="bg-slate-50 rounded-lg p-3 border-l-4 border-slate-600">
+          <div className="text-slate-500 flex items-center gap-1.5">
+            <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="currentColor">
+              <path d="M2,14 L5,6 L8,10 L11,4 L14,14 Z" opacity="0.6" />
+            </svg>
             ITRA 努力值
             <HelpTip text="距离(km) + 爬升(m)/100，用于衡量赛道难度" />
           </div>
-          <div className="text-xl font-bold text-gray-900">{itraEffort}</div>
+          <div className="text-xl font-bold text-slate-900 mt-1">{itraEffort}</div>
         </div>
-        <div>
-          <div className="text-gray-500">
+
+        <div className="bg-slate-50 rounded-lg p-3 border-l-4 border-amber-500">
+          <div className="text-slate-500 flex items-center gap-1.5">
+            <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M8 2v8M6 6l2-4 2 4M5 14h6" />
+            </svg>
             CP 数量
             <HelpTip text="检查点/补给站数量" />
           </div>
-          <div className="text-xl font-bold text-gray-900">{cpCount}</div>
+          <div className="text-xl font-bold text-slate-900 mt-1">{cpCount}</div>
         </div>
-        <div>
-          <div className="text-gray-500">
+
+        <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg p-3 border-l-4 border-orange-500">
+          <div className="text-slate-500 flex items-center gap-1.5">
+            <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="8" cy="8" r="6" />
+              <path d="M8 4v4l3 2" />
+            </svg>
             预计完赛
             <HelpTip text="基于全马成绩、iTRA 积分和赛道数据的自动推算" />
           </div>
-          <div className="text-xl font-bold text-orange-600">
+          <div className="text-2xl font-bold text-orange-600 mt-1">
             {formatTime(predictedTime)}
           </div>
         </div>

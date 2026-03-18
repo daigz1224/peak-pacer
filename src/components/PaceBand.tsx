@@ -23,15 +23,25 @@ export function PaceBand({ splits, raceName }: Props) {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
+    <div className="bg-white rounded-xl shadow-sm p-5">
       <div className="flex items-center justify-between mb-3 print:hidden">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+          <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <rect x="2" y="1" width="12" height="5" rx="1" />
+            <rect x="1" y="6" width="14" height="7" rx="1" />
+            <rect x="5" y="10" width="6" height="3" rx="0.5" />
+          </svg>
           配速手环
         </h3>
         <button
           onClick={handlePrint}
-          className="px-3 py-1.5 text-xs bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
         >
+          <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="4" y="1" width="8" height="4" rx="0.5" />
+            <rect x="1" y="5" width="14" height="6" rx="1" />
+            <rect x="4" y="9" width="8" height="5" rx="0.5" />
+          </svg>
           打印手环
         </button>
       </div>

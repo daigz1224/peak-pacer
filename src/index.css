@@ -26,6 +26,23 @@ body {
   pointer-events: none;
 }
 
+/* Keep Leaflet controls below sticky header */
+.leaflet-top {
+  z-index: 500 !important;
+}
+
+/* Custom scrollbar for table overflow */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 6px;
+}
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 /* Print styles for pace band */
 @media print {
   body * {
