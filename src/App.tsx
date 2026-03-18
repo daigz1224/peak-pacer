@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
+import { useState, useCallback, useEffect, useDeferredValue, lazy, Suspense } from 'react';
 import type { ParsedGpx, RunnerProfile } from './types';
 import { DEFAULT_PROFILE } from './types';
 import { parseGpx } from './lib/gpx-parser';
@@ -50,7 +50,12 @@ function App() {
       .catch(() => {});
   }, [handleGpxLoad]);
 
-  const analysis = useRouteAnalysis(gpx, profile);
+  // Defer heavy computation so UI updates immediately on track switch
+  const deferredGpx = useDeferredValue(gpx);
+  const deferredProfile = useDeferredValue(profile);
+  const analysis = useRouteAnalysis(deferredGpx, deferredProfile);
+  const isAnalyzing = deferredGpx !== gpx;
+
   const { weather, loading: weatherLoading, error: weatherError } =
     useWeatherForecast(gpx?.trackPoints ?? null, raceDate || null);
 
@@ -92,6 +97,15 @@ function App() {
 
           {/* Main content */}
           <div className="space-y-6">
+            {isAnalyzing && analysis && (
+              <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3 text-sm text-slate-500">
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                正在分析赛道数据...
+              </div>
+            )}
             {!analysis ? (
               <div className="bg-white rounded-xl shadow-sm p-12 text-center">
                 <svg viewBox="0 0 120 80" className="w-32 h-20 mx-auto mb-4 text-slate-200" fill="currentColor">
