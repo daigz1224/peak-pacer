@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { GpxPoint, WeatherSummary } from '../types';
-import { getTrackCenter, fetchWeatherHistory } from '../lib/weather';
+import { getTrackCenter, fetchWeatherHistory, readCache } from '../lib/weather';
 
 export function useWeatherForecast(
   trackPoints: GpxPoint[] | null,
@@ -17,10 +17,20 @@ export function useWeatherForecast(
     }
 
     let cancelled = false;
+    const center = getTrackCenter(trackPoints);
+
+    // Return cached data immediately if available
+    const cached = readCache(center.lat, center.lon, raceDate);
+    if (cached) {
+      setWeather(cached);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
-    const center = getTrackCenter(trackPoints);
     const date = new Date(raceDate + 'T00:00:00');
 
     fetchWeatherHistory(center.lat, center.lon, date)

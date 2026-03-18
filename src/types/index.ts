@@ -43,6 +43,12 @@ export interface CpSplit {
   cumulativeTime: number; // minutes
 }
 
+export interface YearlyTemperature {
+  year: number;
+  high: number;
+  low: number;
+}
+
 export interface WeatherSummary {
   avgTemp: number;
   minTemp: number;
@@ -51,6 +57,7 @@ export interface WeatherSummary {
   avgWindSpeed: number; // km/h
   avgHumidity: number; // %
   dominantWindDirection: number; // degrees
+  yearlyTemps?: YearlyTemperature[];
 }
 
 export const DEFAULT_PROFILE: RunnerProfile = {
