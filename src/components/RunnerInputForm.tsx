@@ -35,10 +35,10 @@ export function RunnerInputForm({ profile, predictedTime, onChange }: Props) {
         跑者参数
       </h3>
 
-      {/* iTRA — primary input */}
+      {/* ITRA — primary input */}
       <div>
         <label className="block text-sm text-slate-600 mb-1">
-          iTRA 积分
+          ITRA 积分
           <span className="ml-1 text-xs text-slate-400">(200-900)</span>
         </label>
         <input
