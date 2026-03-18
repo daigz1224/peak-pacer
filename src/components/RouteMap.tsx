@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useEffect, useState, useCallback } from 'react';
 import { MapContainer, TileLayer, Polyline, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -14,14 +14,14 @@ const SOLID_COLOR = '#e63946';
 
 const TILE_STYLES = [
   { name: '街道', url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attr: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' },
-  { name: '地形', url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', attr: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a>' },
   { name: '卫星', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr: '&copy; Esri' },
+  { name: '地形', url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', attr: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a>' },
 ] as const;
 
 /** Re-fit map bounds when track changes */
 function FitBounds({ bounds }: { bounds: L.LatLngBounds }) {
   const map = useMap();
-  useMemo(() => {
+  useEffect(() => {
     map.fitBounds(bounds, { padding: [20, 20] });
   }, [map, bounds]);
   return null;
@@ -37,7 +37,7 @@ function ResetButton({ bounds }: { bounds: L.LatLngBounds }) {
     <button
       type="button"
       onClick={handleReset}
-      className="absolute top-2 right-2 z-[1000] bg-white border border-gray-300 rounded-md px-2 py-1 text-xs text-gray-600 hover:bg-gray-50 shadow-sm cursor-pointer"
+      className="absolute top-2 right-2 z-[499] bg-white border border-gray-300 rounded-md px-2 py-1 text-xs text-gray-600 hover:bg-gray-50 shadow-sm cursor-pointer"
       title="重置视图"
     >
       ⟲ 重置
@@ -153,9 +153,12 @@ export function RouteMap({ trackPoints, cpMarkers }: Props) {
   const tile = TILE_STYLES[tileIdx];
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
+    <div className="bg-white rounded-xl shadow-sm p-5">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+          <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M1 3l5 2v10l-5-2V3zM6 5l4-2v10l-4 2V5zM10 3l5-2v10l-5 2V3z" />
+          </svg>
           赛道地图
         </h3>
         <div className="flex items-center gap-3">
@@ -198,7 +201,7 @@ export function RouteMap({ trackPoints, cpMarkers }: Props) {
         <MapContainer
           bounds={bounds}
           boundsOptions={{ padding: [20, 20] }}
-          scrollWheelZoom={true}
+          scrollWheelZoom={false}
           style={{ height: '100%', width: '100%' }}
         >
           <FitBounds bounds={bounds} />
