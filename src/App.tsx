@@ -146,7 +146,7 @@ function App() {
 
       <footer className="max-w-6xl mx-auto px-4 py-6 text-center print:hidden">
         <p className="text-xs text-slate-400 italic">
-          "跑得不好有时是一种意外，但如果你确实跑出了一场精彩的比赛，那是因为你有能力跑出这样的比赛。"
+          "有时候，跑得不好是一种意外，但如果你确实跑出了一场精彩的比赛，那就是因为你有能力跑出这样的比赛。"
           <span className="not-italic ml-1">—— 杰克·丹尼尔斯</span>
         </p>
       </footer>
