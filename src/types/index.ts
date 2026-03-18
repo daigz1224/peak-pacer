@@ -25,10 +25,17 @@ export interface Segment {
   trackPoints: GpxPoint[];
 }
 
+export interface HistoricalRace {
+  distance: number; // km
+  elevationGain: number; // meters
+  finishTime: number; // minutes
+}
+
 export interface RunnerProfile {
   marathonTime: number; // minutes
   targetTime: number | null; // minutes, null = auto
   itraPoints: number; // 0-1000
+  historicalRaces?: HistoricalRace[];
 }
 
 export interface CpSplit {
