@@ -26,12 +26,6 @@ function gpxManifestPlugin() {
   }
 }
 
-export default defineConfig(async () => {
-  const plugins = [react(), tailwindcss(), gpxManifestPlugin()]
-  if (process.env.CF_PAGES) {
-    // @ts-ignore - only available in Cloudflare Pages build environment
-    const { cloudflare } = await import('@cloudflare/vite-plugin')
-    plugins.push(cloudflare())
-  }
-  return { plugins }
+export default defineConfig({
+  plugins: [react(), tailwindcss(), gpxManifestPlugin()],
 })
