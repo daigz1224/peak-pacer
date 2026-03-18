@@ -32,9 +32,9 @@ export interface HistoricalRace {
 }
 
 export interface RunnerProfile {
-  marathonTime: number; // minutes
+  marathonTime?: number; // minutes, optional (for reference)
   targetTime: number | null; // minutes, null = auto
-  itraPoints: number; // 0-1000
+  itraPoints: number; // 200-900, primary predictor
   historicalRaces?: HistoricalRace[];
 }
 
@@ -48,6 +48,14 @@ export interface CpSplit {
   estimatedPace: number; // min/km
   segmentTime: number; // minutes
   cumulativeTime: number; // minutes
+}
+
+export interface Climb {
+  startDist: number; // km
+  endDist: number; // km
+  startEle: number; // meters
+  peakEle: number; // meters
+  gain: number; // meters
 }
 
 export interface YearlyTemperature {
@@ -68,7 +76,6 @@ export interface WeatherSummary {
 }
 
 export const DEFAULT_PROFILE: RunnerProfile = {
-  marathonTime: 210, // 3:30
   targetTime: null,
   itraPoints: 500,
 };

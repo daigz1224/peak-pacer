@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import type { ParsedGpx, RunnerProfile, Segment, CpSplit } from '../types';
+import type { ParsedGpx, RunnerProfile, Segment, CpSplit, Climb } from '../types';
 import { computeSegments } from '../lib/cp-splitter';
 import { computeSplits, predictFinishTime } from '../lib/pace-model';
-import { cumulativeDistances } from '../lib/geo';
+import { cumulativeDistances, detectClimbs } from '../lib/geo';
 
 export interface RouteAnalysis {
   segments: Segment[];
@@ -13,6 +13,7 @@ export interface RouteAnalysis {
   totalLoss: number;
   distanceProfile: { distance: number; elevation: number }[];
   cpPositions: { distance: number; name: string }[];
+  climbs: Climb[];
   cpMarkers: { name: string; lat: number; lon: number }[];
 }
 
@@ -52,6 +53,9 @@ export function useRouteAnalysis(
       });
     }
 
+    // Detect major climbs
+    const climbs = detectClimbs(distanceProfile);
+
     // CP positions on the distance axis
     const cpPositions = segments.map((seg) => ({
       distance: seg.cumulativeDistance,
@@ -77,6 +81,7 @@ export function useRouteAnalysis(
       totalLoss,
       distanceProfile,
       cpPositions,
+      climbs,
       cpMarkers,
     };
   }, [gpx, profile]);

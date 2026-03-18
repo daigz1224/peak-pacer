@@ -5,20 +5,27 @@ import {
   YAxis,
   Tooltip,
   ReferenceLine,
+  ReferenceArea,
   ResponsiveContainer,
+  Label,
 } from 'recharts';
+import type { Climb } from '../types';
 
 interface Props {
   data: { distance: number; elevation: number }[];
   cpPositions: { distance: number; name: string }[];
+  climbs: Climb[];
 }
 
-export function ElevationProfile({ data, cpPositions }: Props) {
+export function ElevationProfile({ data, cpPositions, climbs }: Props) {
   if (data.length === 0) return null;
 
   const minEle = Math.min(...data.map((d) => d.elevation));
   const maxEle = Math.max(...data.map((d) => d.elevation));
   const padding = (maxEle - minEle) * 0.1;
+
+  const maxGain = climbs.length > 0 ? Math.max(...climbs.map((c) => c.gain)) : 1;
+  const minGain = climbs.length > 0 ? Math.min(...climbs.map((c) => c.gain)) : 0;
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-5">
@@ -55,6 +62,39 @@ export function ElevationProfile({ data, cpPositions }: Props) {
             labelFormatter={(label) => `${Number(label).toFixed(1)} km`}
             contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
           />
+          {climbs.map((climb, i) => {
+            // Normalize gain to 0-1 range for color intensity
+            const t = maxGain === minGain ? 1 : (climb.gain - minGain) / (maxGain - minGain);
+            // fillOpacity: 0.08 (lightest) to 0.25 (darkest)
+            const fillOpacity = 0.08 + t * 0.17;
+            // strokeOpacity: 0.15 to 0.5
+            const strokeOpacity = 0.15 + t * 0.35;
+            // Label color: interpolate from light orange to deep red-orange
+            const r = Math.round(249 - t * 30);  // 249 → 219
+            const g = Math.round(115 - t * 55);   // 115 → 60
+            const b = Math.round(22 - t * 10);    // 22 → 12
+            const labelColor = `rgb(${r},${g},${b})`;
+            return (
+              <ReferenceArea
+                key={`climb-${i}`}
+                x1={climb.startDist}
+                x2={climb.endDist}
+                fill="#f97316"
+                fillOpacity={fillOpacity}
+                stroke="#f97316"
+                strokeOpacity={strokeOpacity}
+              >
+                <Label
+                  value={`↑${climb.gain}m`}
+                  position="insideTop"
+                  fontSize={10}
+                  fontWeight={600}
+                  fill={labelColor}
+                  offset={2}
+                />
+              </ReferenceArea>
+            );
+          })}
           {cpPositions.map((cp) => (
             <ReferenceLine
               key={cp.name}

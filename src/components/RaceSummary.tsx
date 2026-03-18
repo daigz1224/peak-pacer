@@ -15,7 +15,7 @@ function formatTime(minutes: number): string {
   return `${h}:${m.toString().padStart(2, '0')}`;
 }
 
-function HelpTip({ text }: { text: string }) {
+export function HelpTip({ text, wide }: { text: string; wide?: boolean }) {
   const [show, setShow] = useState(false);
   return (
     <span className="relative inline-block ml-1">
@@ -29,7 +29,7 @@ function HelpTip({ text }: { text: string }) {
         ?
       </button>
       {show && (
-        <div className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2.5 py-1.5 text-xs text-slate-700 bg-white border border-slate-200 rounded-lg shadow-lg whitespace-nowrap">
+        <div className={`absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2.5 py-1.5 text-xs text-slate-700 bg-white border border-slate-200 rounded-lg shadow-lg ${wide ? 'w-64 whitespace-normal leading-relaxed' : 'whitespace-nowrap'}`}>
           {text}
         </div>
       )}
@@ -123,7 +123,7 @@ export function RaceSummary({
               <path d="M8 4v4l3 2" />
             </svg>
             预计完赛
-            <HelpTip text="基于全马成绩、iTRA 积分和赛道数据的自动推算" />
+            <HelpTip wide text="基于 ITRA 积分推算平路基速，逐 GPS 点计算梯度调整（上坡减速、缓下坡加速、陡下坡制动），42km 后叠加超马疲劳因子，累加得出总时间" />
           </div>
           <div className="text-2xl font-bold text-orange-600 mt-1">
             {formatTime(predictedTime)}

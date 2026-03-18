@@ -69,7 +69,7 @@ function App() {
             <path d="M6,20 L10,10 L12,14 L14,6 L16,14 L18,10 L22,20 Z" />
           </svg>
           <span className="text-xl font-bold text-white">Peak Pacer</span>
-          <span className="text-sm text-slate-400 hidden sm:inline">智能越野配速，征服每一座山</span>
+          <span className="text-sm text-slate-400 hidden sm:inline">山野有数</span>
         </div>
         <div className="h-0.5 bg-gradient-to-r from-emerald-500/0 via-emerald-500/50 to-emerald-500/0" />
       </header>
@@ -149,6 +149,7 @@ function App() {
                 <ElevationProfile
                   data={analysis.distanceProfile}
                   cpPositions={analysis.cpPositions}
+                  climbs={analysis.climbs}
                 />
                 <SplitTable splits={analysis.splits} />
                 <PaceBand splits={analysis.splits} raceName={currentFile?.replace('.gpx', '') ?? gpx!.name} />

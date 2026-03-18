@@ -22,8 +22,6 @@ function parseTimeToMinutes(h: number, m: number): number {
 const inputClass = 'w-16 px-2 py-1.5 text-center border border-slate-200 rounded-lg text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 outline-none transition-colors';
 
 export function RunnerInputForm({ profile, predictedTime, onChange }: Props) {
-  const mH = Math.floor(profile.marathonTime / 60);
-  const mM = Math.floor(profile.marathonTime % 60);
   const tH = profile.targetTime != null ? Math.floor(profile.targetTime / 60) : 0;
   const tM = profile.targetTime != null ? Math.floor(profile.targetTime % 60) : 0;
 
@@ -37,44 +35,7 @@ export function RunnerInputForm({ profile, predictedTime, onChange }: Props) {
         跑者参数
       </h3>
 
-      {/* Marathon time */}
-      <div>
-        <label className="block text-sm text-slate-600 mb-1">
-          全马成绩
-        </label>
-        <div className="flex items-center gap-1">
-          <input
-            type="number"
-            min={2}
-            max={7}
-            value={mH}
-            onChange={(e) =>
-              onChange({
-                ...profile,
-                marathonTime: parseTimeToMinutes(+e.target.value, mM),
-              })
-            }
-            className={inputClass}
-          />
-          <span className="text-slate-400">时</span>
-          <input
-            type="number"
-            min={0}
-            max={59}
-            value={mM}
-            onChange={(e) =>
-              onChange({
-                ...profile,
-                marathonTime: parseTimeToMinutes(mH, +e.target.value),
-              })
-            }
-            className={inputClass}
-          />
-          <span className="text-slate-400">分</span>
-        </div>
-      </div>
-
-      {/* iTRA */}
+      {/* iTRA — primary input */}
       <div>
         <label className="block text-sm text-slate-600 mb-1">
           iTRA 积分
@@ -106,8 +67,9 @@ export function RunnerInputForm({ profile, predictedTime, onChange }: Props) {
         <label className="flex items-center gap-2 text-sm text-slate-600 mb-1">
           <span>目标完赛时间</span>
           {profile.targetTime == null && predictedTime && (
-            <span className="text-xs text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+            <span className="text-xs text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded inline-flex items-center gap-0.5">
               自动推算: {formatTime(predictedTime)}
+              <AlgoTip />
             </span>
           )}
         </label>
@@ -214,7 +176,7 @@ function HistoricalRacesSection({
       {open && (
         <div className="mt-2 space-y-2">
           <p className="text-xs text-slate-400">
-            输入越野赛成绩可提升预测准确性
+            输入越野赛成绩可校准 ITRA 预测
           </p>
 
           {races.map((race, idx) => (
@@ -241,6 +203,33 @@ function HistoricalRacesSection({
         </div>
       )}
     </div>
+  );
+}
+
+/* ── Algorithm Tooltip ── */
+
+const ALGO_DESC =
+  '基于 ITRA 积分推算平路基速，逐 GPS 点计算梯度调整（上坡减速、缓下坡加速、陡下坡制动），42km 后叠加超马疲劳因子，累加得出总时间';
+
+function AlgoTip() {
+  const [show, setShow] = useState(false);
+  return (
+    <span className="relative inline-block ml-0.5">
+      <button
+        type="button"
+        className="w-4 h-4 inline-flex items-center justify-center rounded-full bg-emerald-200/60 text-emerald-700 text-[10px] font-bold leading-none hover:bg-emerald-300/60 cursor-help"
+        onClick={() => setShow(!show)}
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+      >
+        ?
+      </button>
+      {show && (
+        <div className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2.5 py-1.5 text-xs text-slate-700 bg-white border border-slate-200 rounded-lg shadow-lg w-64 whitespace-normal leading-relaxed">
+          {ALGO_DESC}
+        </div>
+      )}
+    </span>
   );
 }
 
