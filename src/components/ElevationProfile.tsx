@@ -62,15 +62,19 @@ export function ElevationProfile({ data, cpPositions, climbs, hoverStore }: Prop
   }, [hoverStore, maxDist]);
 
   // Chart hover → write to store
+  // Recharts v3 CategoricalChartFunc type is complex; cast to access activeTooltipIndex
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const handleMouseMove = useCallback(
-    (state: { activePayload?: { payload: { distance: number } }[] }) => {
-      if (!hoverStore || !state.activePayload?.[0]) return;
-      const dist = state.activePayload[0].payload.distance;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (state: any) => {
+      if (!hoverStore) return;
+      const idx = typeof state?.activeTooltipIndex === 'number' ? state.activeTooltipIndex : -1;
+      const point = data[idx];
+      if (!point) return;
       cancelAnimationFrame(rafId.current);
-      rafId.current = requestAnimationFrame(() => hoverStore.setDistance(dist));
+      rafId.current = requestAnimationFrame(() => hoverStore.setDistance(point.distance));
     },
-    [hoverStore],
+    [hoverStore, data],
   );
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
