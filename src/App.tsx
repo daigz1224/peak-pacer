@@ -220,6 +220,9 @@ function App() {
           cpCount={analysis.splits.length}
           distanceProfile={analysis.distanceProfile}
           weather={weather}
+          splits={analysis.splits}
+          climbs={analysis.climbs}
+          itraPoints={profile.itraPoints}
         />
       )}
 
