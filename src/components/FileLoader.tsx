@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import gpxFiles from 'virtual:gpx-files';
 import { SUPPORTED_EXTENSIONS } from '../lib/track-parser';
+import { track } from '../lib/analytics';
 
 interface FileLoaderProps {
   onLoad: (xml: string, fileName: string) => void;
@@ -19,6 +20,7 @@ export function FileLoader({ onLoad, currentFile }: FileLoaderProps) {
       if (!res.ok) throw new Error('Failed to load file');
       const xml = await res.text();
       onLoad(xml, name);
+      track('select-builtin-race', { race: name.replace(/\.(gpx|kml|tcx)$/i, '') });
     },
     [onLoad],
   );
@@ -30,6 +32,7 @@ export function FileLoader({ onLoad, currentFile }: FileLoaderProps) {
       const reader = new FileReader();
       reader.onload = () => {
         onLoad(reader.result as string, file.name);
+        track('upload-gpx');
       };
       reader.readAsText(file);
     },

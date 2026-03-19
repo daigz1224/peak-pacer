@@ -7,6 +7,7 @@ import { useRouteAnalysis } from './hooks/useRouteAnalysis';
 import { useWeatherForecast } from './hooks/useWeatherForecast';
 import { useHoverStore } from './hooks/useHoverSync';
 import { captureShareCard, shareImage, encodeShareUrl, decodeShareUrl } from './lib/share';
+import { track } from './lib/analytics';
 import { FileLoader } from './components/FileLoader';
 import { RunnerInputForm } from './components/RunnerInputForm';
 import { RaceSummary } from './components/RaceSummary';
@@ -79,11 +80,25 @@ function App() {
     ? analysis.splits[analysis.splits.length - 1].cumulativeTime
     : 0;
 
+  // Track prediction completion when a new track is analyzed
+  const prevTrackedFile = useRef<string | null>(null);
+  useEffect(() => {
+    if (analysis && currentFile && currentFile !== prevTrackedFile.current) {
+      prevTrackedFile.current = currentFile;
+      track('generate-prediction', {
+        race: raceName,
+        itra: profile.itraPoints,
+        strategy: profile.strategy ?? 'moderate',
+      });
+    }
+  }, [analysis, currentFile, raceName, profile.itraPoints, profile.strategy]);
+
   // Whether current file is a built-in race (shareable)
   const isBuiltIn = currentFile != null && gpxFiles.includes(currentFile);
 
   const handleShare = useCallback(async () => {
     if (!currentFile) return;
+    track('share-card', { race: raceName });
     const url = encodeShareUrl({ file: currentFile, itra: profile.itraPoints });
     // Try Web Share API first (mobile), fallback to clipboard
     if (typeof navigator.share === 'function') {
@@ -99,6 +114,7 @@ function App() {
 
   const handleWallpaper = useCallback(async () => {
     if (!wallpaperCardRef.current || generatingWallpaper) return;
+    track('export-paceband', { race: raceName });
     setGeneratingWallpaper(true);
     try {
       await new Promise((r) => requestAnimationFrame(r));
