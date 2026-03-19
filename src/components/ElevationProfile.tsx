@@ -87,7 +87,7 @@ export function ElevationProfile({ data, cpPositions, climbs, hoverStore }: Prop
   }, [hoverStore]);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-5">
+    <div className="bg-white rounded-xl shadow-sm p-3 sm:p-5">
       <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
         <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path d="M1 14l4-8 3 4 4-8 3 6" />

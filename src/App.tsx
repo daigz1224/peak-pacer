@@ -127,11 +127,11 @@ function App() {
         <div className="h-0.5 bg-gradient-to-r from-emerald-500/0 via-emerald-500/50 to-emerald-500/0" />
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6">
+      <main className="max-w-6xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-4 sm:gap-6">
           {/* Sidebar */}
-          <aside className="space-y-6 print:hidden">
-            <div className="bg-white rounded-xl shadow-sm p-5 space-y-6">
+          <aside className="space-y-4 sm:space-y-6 print:hidden">
+            <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 space-y-5 sm:space-y-6">
               <FileLoader onLoad={handleTrackLoad} currentFile={currentFile} />
               <RunnerInputForm
                 profile={profile}
@@ -152,7 +152,7 @@ function App() {
           </aside>
 
           {/* Main content */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {isAnalyzing && analysis && (
               <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3 text-sm text-slate-500">
                 <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">

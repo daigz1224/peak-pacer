@@ -141,7 +141,7 @@ export function WeatherPanel({
   error,
 }: Props) {
   return (
-    <div className="bg-white rounded-xl shadow-sm p-5 print:hidden">
+    <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 print:hidden">
       <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2 mb-3">
         <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.5">
           <circle cx="6" cy="6" r="3" />

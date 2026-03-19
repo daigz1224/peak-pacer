@@ -26,7 +26,7 @@ export function SplitTable({ splits, onWallpaper, generatingWallpaper, autoCp }:
   const dotColors = difficultyColors(splits, 'tailwind');
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between px-5 pt-5 pb-2">
+      <div className="flex items-center justify-between px-4 sm:px-5 pt-4 sm:pt-5 pb-2">
         <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
           <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.5">
             <rect x="1" y="2" width="14" height="12" rx="1" />
@@ -57,23 +57,23 @@ export function SplitTable({ splits, onWallpaper, generatingWallpaper, autoCp }:
         )}
       </div>
       {autoCp && (
-        <p className="px-5 pb-2 text-xs text-amber-600">
+        <p className="px-4 sm:px-5 pb-2 text-xs text-amber-600">
           轨迹未包含 CP 点，已按每 10km 自动分段
         </p>
       )}
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-xs sm:text-sm">
           <thead>
-            <tr className="bg-slate-100 text-slate-500 text-xs uppercase">
-              <th className="w-6 px-2 py-2" />
-              <th className="px-4 py-2 text-left">CP</th>
-              <th className="px-3 py-2 text-right">距离</th>
-              <th className="px-3 py-2 text-right">累计</th>
-              <th className="px-3 py-2 text-right">爬升</th>
-              <th className="px-3 py-2 text-right">下降</th>
-              <th className="px-3 py-2 text-right">配速</th>
-              <th className="px-3 py-2 text-right">用时</th>
-              <th className="px-3 py-2 text-right border-l-2 border-orange-200">累计时间</th>
+            <tr className="bg-slate-100 text-slate-500 text-xs uppercase whitespace-nowrap">
+              <th className="w-5 sm:w-6 px-1 sm:px-2 py-2" />
+              <th className="px-2 sm:px-4 py-2 text-left">CP</th>
+              <th className="px-1.5 sm:px-3 py-2 text-right">距离</th>
+              <th className="px-1.5 sm:px-3 py-2 text-right hidden sm:table-cell">累计</th>
+              <th className="px-1.5 sm:px-3 py-2 text-right">爬升</th>
+              <th className="px-1.5 sm:px-3 py-2 text-right hidden sm:table-cell">下降</th>
+              <th className="px-1.5 sm:px-3 py-2 text-right">配速</th>
+              <th className="px-1.5 sm:px-3 py-2 text-right hidden sm:table-cell">用时</th>
+              <th className="px-1.5 sm:px-3 py-2 text-right border-l-2 border-orange-200">累计</th>
             </tr>
           </thead>
           <tbody>
@@ -87,33 +87,35 @@ export function SplitTable({ splits, onWallpaper, generatingWallpaper, autoCp }:
               return (
                 <tr
                   key={i}
-                  className={`border-t border-slate-100 ${rowBg}`}
+                  className={`border-t border-slate-100 ${rowBg} whitespace-nowrap`}
                 >
-                  <td className="px-2 py-2.5 text-center">
-                    <span className={`inline-block w-2 h-2 rounded-full ${dotColors[i]}`} />
+                  <td className="px-1 sm:px-2 py-2 sm:py-2.5 text-center">
+                    <span className={`inline-block w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${dotColors[i]}`} />
                   </td>
-                  <td className="px-4 py-2.5 font-medium text-slate-900">
+                  <td className="px-2 sm:px-4 py-2 sm:py-2.5 font-medium text-slate-900 max-w-[5.5em] sm:max-w-none truncate">
                     {split.cpName}
                   </td>
-                  <td className="px-3 py-2.5 text-right text-slate-700">
-                    {split.segmentDistance.toFixed(1)} km
+                  <td className="px-1.5 sm:px-3 py-2 sm:py-2.5 text-right text-slate-700">
+                    {split.segmentDistance.toFixed(1)}
+                    <span className="hidden sm:inline"> km</span>
                   </td>
-                  <td className="px-3 py-2.5 text-right text-slate-700">
+                  <td className="px-1.5 sm:px-3 py-2 sm:py-2.5 text-right text-slate-700 hidden sm:table-cell">
                     {split.cumulativeDistance.toFixed(1)} km
                   </td>
-                  <td className="px-3 py-2.5 text-right text-emerald-600 font-medium">
-                    +{split.elevationGain}m
+                  <td className="px-1.5 sm:px-3 py-2 sm:py-2.5 text-right text-emerald-600 font-medium">
+                    +{split.elevationGain}
+                    <span className="hidden sm:inline">m</span>
                   </td>
-                  <td className="px-3 py-2.5 text-right text-sky-600">
+                  <td className="px-1.5 sm:px-3 py-2 sm:py-2.5 text-right text-sky-600 hidden sm:table-cell">
                     -{split.elevationLoss}m
                   </td>
-                  <td className="px-3 py-2.5 text-right font-mono font-medium text-slate-900">
+                  <td className="px-1.5 sm:px-3 py-2 sm:py-2.5 text-right font-mono font-medium text-slate-900">
                     {formatPace(split.estimatedPace)}
                   </td>
-                  <td className="px-3 py-2.5 text-right text-slate-700">
+                  <td className="px-1.5 sm:px-3 py-2 sm:py-2.5 text-right text-slate-700 hidden sm:table-cell">
                     {formatTime(split.segmentTime)}
                   </td>
-                  <td className="px-3 py-2.5 text-right font-mono font-bold text-orange-600 border-l-2 border-orange-200">
+                  <td className="px-1.5 sm:px-3 py-2 sm:py-2.5 text-right font-mono font-bold text-orange-600 border-l-2 border-orange-200">
                     {formatTime(split.cumulativeTime)}
                   </td>
                 </tr>

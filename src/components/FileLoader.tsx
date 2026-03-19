@@ -98,7 +98,7 @@ export function FileLoader({ onLoad, currentFile }: FileLoaderProps) {
           <button
             key={name}
             onClick={() => loadDefault(name)}
-            className={`px-3 py-1.5 text-sm text-left rounded-lg transition-colors whitespace-nowrap ${
+            className={`px-3 py-1.5 text-sm text-left rounded-lg transition-colors truncate ${
               currentFile === name
                 ? 'bg-emerald-600 text-white shadow-sm'
                 : 'bg-slate-50 text-slate-700 hover:bg-slate-100'

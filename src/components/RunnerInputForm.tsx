@@ -349,7 +349,7 @@ function AlgoTip() {
 /* ── Single Race Row ── */
 
 const smallInputClass =
-  'w-14 px-1.5 py-1 text-center border border-slate-200 rounded text-xs focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 outline-none transition-colors';
+  'w-12 sm:w-14 px-1 sm:px-1.5 py-1 text-center border border-slate-200 rounded text-xs focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 outline-none transition-colors';
 
 function RaceRow({
   race,
@@ -399,7 +399,7 @@ function RaceRow({
         onChange={(e) =>
           onChange({ finishTime: parseTimeToMinutes(+e.target.value, m) })
         }
-        className={`${smallInputClass} w-10`}
+        className={`${smallInputClass} w-9 sm:w-10`}
         title="完赛时间 (时)"
       />
       <span className="text-xs text-slate-400">:</span>
@@ -412,7 +412,7 @@ function RaceRow({
         onChange={(e) =>
           onChange({ finishTime: parseTimeToMinutes(h, +e.target.value) })
         }
-        className={`${smallInputClass} w-10`}
+        className={`${smallInputClass} w-9 sm:w-10`}
         title="完赛时间 (分)"
       />
 

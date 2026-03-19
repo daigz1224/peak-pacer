@@ -241,22 +241,22 @@ export function RouteMap({ trackPoints, cpMarkers, hoverStore, trackIndex }: Pro
   const tile = TILE_STYLES[tileIdx];
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-5">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+    <div className="bg-white rounded-xl shadow-sm p-3 sm:p-5">
+      <div className="flex items-center justify-between mb-3 gap-2">
+        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2 shrink-0">
           <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M1 3l5 2v10l-5-2V3zM6 5l4-2v10l-4 2V5zM10 3l5-2v10l-5 2V3z" />
           </svg>
-          赛道地图
+          <span className="hidden sm:inline">赛道地图</span>
         </h3>
-        <div className="flex items-center gap-3">
-          <div className="flex gap-1">
+        <div className="flex items-center gap-1.5 sm:gap-3">
+          <div className="flex gap-0.5 sm:gap-1">
             {TRACK_STYLES.map((s) => (
               <button
                 key={s.key}
                 type="button"
                 onClick={() => setTrackStyle(s.key)}
-                className={`px-2 py-0.5 text-xs rounded cursor-pointer transition-colors ${
+                className={`px-1.5 sm:px-2 py-0.5 text-xs rounded cursor-pointer transition-colors ${
                   s.key === trackStyle
                     ? 'bg-gray-800 text-white'
                     : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
@@ -267,13 +267,13 @@ export function RouteMap({ trackPoints, cpMarkers, hoverStore, trackIndex }: Pro
             ))}
           </div>
           <div className="w-px h-4 bg-gray-200" />
-          <div className="flex gap-1">
+          <div className="flex gap-0.5 sm:gap-1">
             {TILE_STYLES.map((s, i) => (
               <button
                 key={s.name}
                 type="button"
                 onClick={() => setTileIdx(i)}
-                className={`px-2 py-0.5 text-xs rounded cursor-pointer transition-colors ${
+                className={`px-1.5 sm:px-2 py-0.5 text-xs rounded cursor-pointer transition-colors ${
                   i === tileIdx
                     ? 'bg-gray-800 text-white'
                     : 'bg-gray-100 text-gray-500 hover:bg-gray-200'

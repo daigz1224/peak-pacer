@@ -52,13 +52,13 @@ export function RaceSummary({
   const itraEffort = Math.round(totalDistance + totalGain / 100);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm px-5 py-4">
+    <div className="bg-white rounded-xl shadow-sm px-3 sm:px-5 py-3 sm:py-4">
       {/* Title row */}
       <div className="flex items-center gap-2 mb-3">
         <svg viewBox="0 0 20 16" className="w-5 h-4 text-emerald-500 shrink-0" fill="currentColor">
           <path d="M1,15 L5,5 L7,9 L10,2 L13,9 L15,5 L19,15 Z" />
         </svg>
-        <h2 className="text-lg font-bold text-slate-900 flex-1">{name}</h2>
+        <h2 className="text-base sm:text-lg font-bold text-slate-900 flex-1 truncate">{name}</h2>
         <div className="flex items-center gap-1 print:hidden">
           {onShare && (
             <button
@@ -139,10 +139,10 @@ function StatItem({
 }) {
   return (
     <div className={`sm:flex-1 text-center sm:text-left sm:px-3 first:sm:pl-0 last:sm:pr-0 ${divider ? 'sm:border-r sm:border-slate-200' : ''}`}>
-      <div className={`${large ? 'text-xl' : 'text-lg'} font-bold ${color} leading-tight`}>
+      <div className={`${large ? 'text-lg sm:text-xl' : 'text-base sm:text-lg'} font-bold ${color} leading-tight whitespace-nowrap`}>
         {value}
       </div>
-      <div className="text-[11px] text-slate-400 mt-0.5 flex items-center justify-center sm:justify-start gap-0.5">
+      <div className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 flex items-center justify-center sm:justify-start gap-0.5 whitespace-nowrap">
         {label}
       </div>
     </div>
