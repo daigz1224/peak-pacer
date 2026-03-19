@@ -39,7 +39,7 @@ export const WallpaperCard = forwardRef<HTMLDivElement, Props>(
     const CARD_W = 402;
     const CARD_H = 874;
     const PAD_X = 24;
-    const PAD_TOP = 70;
+    const PAD_TOP = 44;
     const PAD_BOTTOM = 24;
     const CONTENT_W = CARD_W - PAD_X * 2;
 
@@ -98,13 +98,15 @@ export const WallpaperCard = forwardRef<HTMLDivElement, Props>(
         }} />
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, position: 'relative' as const }}>
-          <svg viewBox="0 0 28 20" style={{ width: 22, height: 16 }} fill="#10b981">
-            <path d="M2,20 L7,8 L9,12 L14,2 L19,12 L21,8 L26,20 Z" opacity="0.3" />
-            <path d="M6,20 L10,10 L12,14 L14,6 L16,14 L18,10 L22,20 Z" />
-          </svg>
-          <span style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0', letterSpacing: 0.5 }}>Peak Pacer</span>
-          <span style={{ fontSize: 11, color: '#64748b' }}>山野有数</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, position: 'relative' as const }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <svg viewBox="0 0 28 20" style={{ width: 22, height: 16 }} fill="#10b981">
+              <path d="M2,20 L7,8 L9,12 L14,2 L19,12 L21,8 L26,20 Z" opacity="0.3" />
+              <path d="M6,20 L10,10 L12,14 L14,6 L16,14 L18,10 L22,20 Z" />
+            </svg>
+            <span style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0', letterSpacing: 0.5 }}>Peak Pacer</span>
+          </div>
+          <span style={{ fontSize: 16, fontWeight: 700, color: '#64748b', letterSpacing: 0.5 }}>山野有数</span>
         </div>
 
         {/* Race name — single line, adaptive size */}
@@ -173,7 +175,7 @@ export const WallpaperCard = forwardRef<HTMLDivElement, Props>(
           </div>
 
           {/* Table rows */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' as const, justifyContent: 'space-evenly' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' as const, justifyContent: 'center', gap: rowPadY * 2 }}>
             {splits.map((s, i) => {
               const clockTime = formatClockTime(startTime, s.cumulativeTime);
               const dotColor = dotColors[i];
@@ -183,7 +185,7 @@ export const WallpaperCard = forwardRef<HTMLDivElement, Props>(
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    padding: `${rowPadY}px 10px`,
+                    padding: '0 10px',
                     fontSize: tableFontSize,
                     borderBottom: i < splits.length - 1 ? '1px solid rgba(51,65,85,0.3)' : 'none',
                     background: i % 2 === 0 ? 'rgba(255,255,255,0.035)' : 'transparent',
@@ -267,18 +269,23 @@ export const WallpaperCard = forwardRef<HTMLDivElement, Props>(
           <span style={{ fontStyle: 'normal', marginLeft: 4, color: '#475569' }}>—— 杰克·丹尼尔斯</span>
         </div>
 
-        {/* Footer */}
+        {/* Footer branding */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
-          fontSize: 10,
-          color: '#475569',
-          letterSpacing: 0.5,
+          alignItems: 'baseline',
           position: 'relative' as const,
         }}>
-          <span style={{ fontWeight: 600 }}>peak-pacer.top</span>
-          <span>{new Date().toISOString().slice(0, 10)}</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+            <svg viewBox="0 0 28 20" style={{ width: 16, height: 12, alignSelf: 'center' }} fill="#10b981">
+              <path d="M2,20 L7,8 L9,12 L14,2 L19,12 L21,8 L26,20 Z" opacity="0.3" />
+              <path d="M6,20 L10,10 L12,14 L14,6 L16,14 L18,10 L22,20 Z" />
+            </svg>
+            <span style={{ fontSize: 14, fontWeight: 800, color: '#94a3b8', letterSpacing: 0.5 }}>
+              peak-pacer.top
+            </span>
+          </div>
+          <span style={{ fontSize: 10, color: '#475569' }}>{new Date().toISOString().slice(0, 10)}</span>
         </div>
       </div>
     );
