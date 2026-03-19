@@ -25,6 +25,14 @@ export interface Segment {
   trackPoints: GpxPoint[];
 }
 
+export type RaceStrategy = 'conservative' | 'moderate' | 'aggressive';
+
+export interface TimeRange {
+  optimistic: number;  // aggressive estimate (minutes)
+  target: number;      // moderate estimate (minutes)
+  conservative: number; // conservative estimate (minutes)
+}
+
 export interface HistoricalRace {
   distance: number; // km
   elevationGain: number; // meters
@@ -37,6 +45,7 @@ export interface RunnerProfile {
   itraPoints: number; // 200-900, primary predictor
   historicalRaces?: HistoricalRace[];
   bodyWeightKg?: number; // optional, default ~70kg
+  strategy?: RaceStrategy; // default 'moderate'
 }
 
 export interface CpSplit {

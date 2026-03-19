@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import type { ParsedGpx, RunnerProfile, Segment, CpSplit, Climb } from '../types';
+import type { ParsedGpx, RunnerProfile, Segment, CpSplit, Climb, TimeRange } from '../types';
 import { computeSegments } from '../lib/cp-splitter';
-import { computeSplits, predictFinishTime } from '../lib/pace-model';
+import { computeSplits, predictFinishTime, predictTimeRange } from '../lib/pace-model';
 import { cumulativeDistances, detectClimbs } from '../lib/geo';
 import { buildTrackIndex, type TrackIndex } from '../lib/track-index';
 
@@ -9,6 +9,7 @@ export interface RouteAnalysis {
   segments: Segment[];
   splits: CpSplit[];
   predictedTime: number;
+  timeRange: TimeRange;
   totalDistance: number;
   totalGain: number;
   totalLoss: number;
@@ -30,6 +31,7 @@ export function useRouteAnalysis(
     if (segments.length === 0) return null;
 
     const predictedTime = predictFinishTime(segments, profile);
+    const timeRange = predictTimeRange(segments, profile);
     const splits = computeSplits(segments, profile);
 
     const totalDistance = segments[segments.length - 1].cumulativeDistance;
@@ -80,6 +82,7 @@ export function useRouteAnalysis(
       segments,
       splits,
       predictedTime,
+      timeRange,
       totalDistance,
       totalGain,
       totalLoss,

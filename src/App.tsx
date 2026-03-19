@@ -67,7 +67,10 @@ function App() {
     useWeatherForecast(gpx?.trackPoints ?? null, raceDate || null);
 
   const raceName = currentFile?.replace('.gpx', '') ?? gpx?.name ?? '';
-  const predictedTime = profile.targetTime ?? analysis?.predictedTime ?? 0;
+  // Use the last split's cumulative time — it already accounts for strategy factor
+  const predictedTime = analysis?.splits.length
+    ? analysis.splits[analysis.splits.length - 1].cumulativeTime
+    : 0;
 
   const handleShare = useCallback(async () => {
     if (!shareCardRef.current || sharing) return;
@@ -122,6 +125,7 @@ function App() {
               <RunnerInputForm
                 profile={profile}
                 predictedTime={analysis?.predictedTime ?? null}
+                timeRange={analysis?.timeRange ?? null}
                 onChange={setProfile}
               />
             </div>

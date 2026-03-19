@@ -1,4 +1,4 @@
-import type { Segment, RunnerProfile, CpSplit, HistoricalRace } from '../types';
+import type { Segment, RunnerProfile, CpSplit, HistoricalRace, RaceStrategy, TimeRange } from '../types';
 import { haversineDistance, smoothElevations, gradientEffortFactor } from './geo';
 
 /**
@@ -29,8 +29,8 @@ export function calibratedITRA(races: HistoricalRace[]): number | null {
     const kmEffort = race.distance + race.elevationGain / 100;
     const finishHours = race.finishTime / 60;
     const impliedPI = (kmEffort / finishHours) * 100;
-    // Sanity check: PI should be in reasonable range (150 - 1000)
-    if (impliedPI >= 150 && impliedPI <= 1000) {
+    // Sanity check: PI should be in reasonable range (200 - 900)
+    if (impliedPI >= 200 && impliedPI <= 900) {
       pis.push(impliedPI);
     }
   }
@@ -45,13 +45,57 @@ export function calibratedITRA(races: HistoricalRace[]): number | null {
     : (pis[mid - 1] + pis[mid]) / 2;
 }
 
-/** Resolve the effective ITRA PI for a profile */
+/**
+ * Compute strategy scaling factor based on race difficulty.
+ *
+ * Harder/longer races have wider spread because:
+ * - Ultra fatigue is nonlinear → going faster is disproportionately harder
+ * - More variables (GI, weather, navigation) increase variance
+ * - Short races are more predictable
+ *
+ * The spread is also asymmetric for hard races: aggressive is closer to
+ * moderate than conservative, reflecting the convex fatigue curve.
+ *
+ * Effort value = distance(km) + gain(m)/100 (same as ITRA effort)
+ * Easy (effort ≤ 30):  aggressive 0.93, conservative 1.08
+ * Medium (effort ~60):  aggressive 0.94, conservative 1.12
+ * Hard (effort ≥ 120):  aggressive 0.95, conservative 1.18
+ */
+function strategyFactor(
+  strategy: RaceStrategy,
+  segments: Segment[],
+): number {
+  if (strategy === 'moderate') return 1.0;
+
+  const totalDist = segments[segments.length - 1]?.cumulativeDistance ?? 0;
+  const totalGain = segments.reduce((s, seg) => s + seg.elevationGain, 0);
+  const effort = totalDist + totalGain / 100;
+
+  // Difficulty ratio: 0 at effort=20, 1 at effort=120, clamped
+  const difficulty = Math.max(0, Math.min(1, (effort - 20) / 100));
+
+  if (strategy === 'aggressive') {
+    // Aggressive spread: 7% (easy) → 5% (hard)
+    // Short races allow more upside; ultras are capped by fatigue
+    const spread = 0.07 - difficulty * 0.02;
+    return 1 - spread;
+  } else {
+    // Conservative spread: 8% (easy) → 18% (hard), wider than aggressive
+    const spread = 0.08 + difficulty * 0.10;
+    return 1 + spread;
+  }
+}
+
+/** Resolve the effective ITRA PI for a profile, clamped to 200-900 */
 function resolveITRA(profile: RunnerProfile): number {
+  let pi: number;
   if (profile.historicalRaces && profile.historicalRaces.length > 0) {
     const calibrated = calibratedITRA(profile.historicalRaces);
-    if (calibrated !== null) return calibrated;
+    pi = calibrated ?? profile.itraPoints;
+  } else {
+    pi = profile.itraPoints;
   }
-  return profile.itraPoints;
+  return Math.max(200, Math.min(900, pi));
 }
 
 /**
@@ -111,8 +155,9 @@ export function computeSplits(
   const rawTimes = segments.map((seg) => computeSegmentTime(seg, baseSpeed));
   const rawTotal = rawTimes.reduce((a, b) => a + b, 0);
 
-  // Scale to target time if provided
-  const targetTime = profile.targetTime ?? rawTotal;
+  // Scale to target time if provided, otherwise apply strategy factor
+  const factor = strategyFactor(profile.strategy ?? 'moderate', segments);
+  const targetTime = profile.targetTime ?? rawTotal * factor;
   const scale = targetTime / rawTotal;
 
   // Build splits
@@ -146,4 +191,56 @@ export function predictFinishTime(
     (sum, seg) => sum + computeSegmentTime(seg, baseSpeed),
     0,
   );
+}
+
+/**
+ * Predict a time range (optimistic / target / conservative).
+ * The spread is difficulty-aware and asymmetric (via strategyFactor).
+ * With historical races, PI variance narrows the spread (up to 50% tighter).
+ */
+export function predictTimeRange(
+  segments: Segment[],
+  profile: RunnerProfile,
+): TimeRange {
+  const rawTotal = predictFinishTime(segments, profile);
+
+  // Compute spread from historical race PI variance
+  const races = profile.historicalRaces ?? [];
+  const validPIs: number[] = [];
+  for (const race of races) {
+    if (race.distance <= 0 || race.finishTime <= 0) continue;
+    const kmEffort = race.distance + race.elevationGain / 100;
+    const finishHours = race.finishTime / 60;
+    const impliedPI = (kmEffort / finishHours) * 100;
+    if (impliedPI >= 200 && impliedPI <= 900) validPIs.push(impliedPI);
+  }
+
+  // Compute difficulty-aware, asymmetric spread
+  const aggressiveFactor = strategyFactor('aggressive', segments);
+  const conservativeFactor = strategyFactor('conservative', segments);
+
+  // Historical data narrows the spread (lerp toward tighter bounds)
+  let dataConfidence: number; // 0 = no data, 1 = high confidence
+  if (validPIs.length >= 2) {
+    const mean = validPIs.reduce((a, b) => a + b, 0) / validPIs.length;
+    const variance = validPIs.reduce((s, v) => s + (v - mean) ** 2, 0) / validPIs.length;
+    const cv = Math.sqrt(variance) / mean;
+    // Low CV → high confidence; CV of 0.15+ → low confidence
+    dataConfidence = Math.max(0, Math.min(1, 1 - cv / 0.15));
+  } else if (validPIs.length === 1) {
+    dataConfidence = 0.4;
+  } else {
+    dataConfidence = 0;
+  }
+
+  // Narrow the spread with data confidence (up to 50% tighter)
+  const narrowing = 1 - dataConfidence * 0.5;
+  const optSpread = (1 - aggressiveFactor) * narrowing;
+  const consSpread = (conservativeFactor - 1) * narrowing;
+
+  return {
+    optimistic: rawTotal * (1 - optSpread),
+    target: rawTotal,
+    conservative: rawTotal * (1 + consSpread),
+  };
 }
