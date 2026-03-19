@@ -5,6 +5,7 @@ interface Props {
   splits: CpSplit[];
   onWallpaper?: () => void;
   generatingWallpaper?: boolean;
+  autoCp?: boolean;
 }
 
 function formatPace(minPerKm: number): string {
@@ -21,7 +22,7 @@ function formatTime(minutes: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-export function SplitTable({ splits, onWallpaper, generatingWallpaper }: Props) {
+export function SplitTable({ splits, onWallpaper, generatingWallpaper, autoCp }: Props) {
   const dotColors = difficultyColors(splits, 'tailwind');
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -55,6 +56,11 @@ export function SplitTable({ splits, onWallpaper, generatingWallpaper }: Props) 
           </button>
         )}
       </div>
+      {autoCp && (
+        <p className="px-5 pb-2 text-xs text-amber-600">
+          轨迹未包含 CP 点，已按每 10km 自动分段
+        </p>
+      )}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>

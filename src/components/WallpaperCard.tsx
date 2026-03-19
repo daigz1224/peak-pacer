@@ -104,7 +104,7 @@ export const WallpaperCard = forwardRef<HTMLDivElement, Props>(
             <path d="M6,20 L10,10 L12,14 L14,6 L16,14 L18,10 L22,20 Z" />
           </svg>
           <span style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0', letterSpacing: 0.5 }}>Peak Pacer</span>
-          <span style={{ fontSize: 11, color: '#475569' }}>山野有数</span>
+          <span style={{ fontSize: 11, color: '#64748b' }}>山野有数</span>
         </div>
 
         {/* Race name — single line, adaptive size */}
@@ -159,10 +159,10 @@ export const WallpaperCard = forwardRef<HTMLDivElement, Props>(
             padding: '5px 10px',
             fontSize: 9,
             fontWeight: 600,
-            color: '#475569',
+            color: '#64748b',
             textTransform: 'uppercase' as const,
             letterSpacing: 1.5,
-            borderBottom: '1px solid rgba(71,85,105,0.4)',
+            borderBottom: '1px solid rgba(71,85,105,0.5)',
           }}>
             <span style={{ width: 14 }} />
             <span style={{ flex: 2.2 }}>CP</span>
@@ -186,7 +186,7 @@ export const WallpaperCard = forwardRef<HTMLDivElement, Props>(
                     padding: `${rowPadY}px 10px`,
                     fontSize: tableFontSize,
                     borderBottom: i < splits.length - 1 ? '1px solid rgba(51,65,85,0.3)' : 'none',
-                    background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
+                    background: i % 2 === 0 ? 'rgba(255,255,255,0.035)' : 'transparent',
                   }}
                 >
                   {/* Difficulty dot */}
@@ -209,13 +209,13 @@ export const WallpaperCard = forwardRef<HTMLDivElement, Props>(
                   }}>
                     {s.cpName}
                   </span>
-                  <span style={{ flex: 1, textAlign: 'right', color: '#94a3b8', fontVariantNumeric: 'tabular-nums' }}>
+                  <span style={{ flex: 1, textAlign: 'right', color: '#cbd5e1', fontVariantNumeric: 'tabular-nums' }}>
                     {s.cumulativeDistance.toFixed(1)}
                   </span>
-                  <span style={{ flex: 1, textAlign: 'right', color: '#10b981', fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>
+                  <span style={{ flex: 1, textAlign: 'right', color: '#34d399', fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>
                     +{s.elevationGain}
                   </span>
-                  <span style={{ flex: 1, textAlign: 'right', color: '#38bdf8', fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>
+                  <span style={{ flex: 1, textAlign: 'right', color: '#7dd3fc', fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>
                     -{s.elevationLoss}
                   </span>
                   <span style={{
@@ -256,7 +256,7 @@ export const WallpaperCard = forwardRef<HTMLDivElement, Props>(
         {/* Quote */}
         <div style={{
           fontSize: 10,
-          color: '#475569',
+          color: '#64748b',
           fontStyle: 'italic',
           textAlign: 'center' as const,
           lineHeight: 1.5,
@@ -264,7 +264,7 @@ export const WallpaperCard = forwardRef<HTMLDivElement, Props>(
           position: 'relative' as const,
         }}>
           "有时候，跑得不好是一种意外，但如果你确实跑出了一场精彩的比赛，那就是因为你有能力跑出这样的比赛。"
-          <span style={{ fontStyle: 'normal', marginLeft: 4, color: '#334155' }}>—— 杰克·丹尼尔斯</span>
+          <span style={{ fontStyle: 'normal', marginLeft: 4, color: '#475569' }}>—— 杰克·丹尼尔斯</span>
         </div>
 
         {/* Footer */}
@@ -273,7 +273,7 @@ export const WallpaperCard = forwardRef<HTMLDivElement, Props>(
           justifyContent: 'space-between',
           alignItems: 'center',
           fontSize: 10,
-          color: '#334155',
+          color: '#475569',
           letterSpacing: 0.5,
           position: 'relative' as const,
         }}>
@@ -296,12 +296,12 @@ function StatCard({ label, value, unit, sub, color }: {
       background: 'rgba(255,255,255,0.04)',
       borderRadius: 10,
       padding: '10px 12px',
-      border: '1px solid rgba(255,255,255,0.06)',
+      border: '1px solid rgba(255,255,255,0.08)',
     }}>
-      <div style={{ fontSize: 9, color: '#475569', textTransform: 'uppercase' as const, letterSpacing: 1, fontWeight: 600 }}>{label}</div>
+      <div style={{ fontSize: 9, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: 1, fontWeight: 600 }}>{label}</div>
       <div style={{ fontSize: 22, fontWeight: 800, color: color ?? '#f8fafc', marginTop: 3, lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>
         {value}
-        {unit && <span style={{ fontSize: 11, fontWeight: 400, marginLeft: 2, color: '#475569' }}>{unit}</span>}
+        {unit && <span style={{ fontSize: 11, fontWeight: 400, marginLeft: 2, color: '#64748b' }}>{unit}</span>}
       </div>
       {sub && <div style={{ fontSize: 11, color: '#fbbf24', fontWeight: 700, marginTop: 2, fontVariantNumeric: 'tabular-nums' }}>{sub}</div>}
     </div>

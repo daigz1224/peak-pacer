@@ -45,5 +45,7 @@ export function parseTrackFile(content: string, format: TrackFormat): ParsedGpx 
   }
 }
 
-/** All supported file extensions for the upload input */
-export const SUPPORTED_EXTENSIONS = Object.keys(EXT_MAP).join(',');
+/** All supported file extensions for the upload input (include uppercase for Windows) */
+export const SUPPORTED_EXTENSIONS = Object.keys(EXT_MAP)
+  .flatMap((e) => [e, e.toUpperCase()])
+  .join(',');

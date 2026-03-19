@@ -18,6 +18,8 @@ export interface RouteAnalysis {
   climbs: Climb[];
   cpMarkers: { name: string; lat: number; lon: number }[];
   trackIndex: TrackIndex;
+  /** True when no waypoints exist and CPs are auto-generated every 10km */
+  autoCp: boolean;
 }
 
 export function useRouteAnalysis(
@@ -27,6 +29,7 @@ export function useRouteAnalysis(
   return useMemo(() => {
     if (!gpx || gpx.trackPoints.length < 2) return null;
 
+    const autoCp = gpx.waypoints.length === 0;
     const segments = computeSegments(gpx.trackPoints, gpx.waypoints);
     if (segments.length === 0) return null;
 
@@ -91,6 +94,7 @@ export function useRouteAnalysis(
       climbs,
       cpMarkers,
       trackIndex,
+      autoCp,
     };
   }, [gpx, profile]);
 }

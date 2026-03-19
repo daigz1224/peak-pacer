@@ -5,7 +5,13 @@ import fs from 'node:fs'
 import path from 'node:path'
 import type { ViteDevServer } from 'vite'
 
-// Auto-discover GPX files in public/files/, with HMR on file changes
+// Supported track file extensions (case-insensitive)
+const TRACK_EXTS = ['.gpx', '.kml', '.tcx']
+function isTrackFile(name: string): boolean {
+  return TRACK_EXTS.includes(path.extname(name).toLowerCase())
+}
+
+// Auto-discover track files in public/files/, with HMR on file changes
 function gpxManifestPlugin() {
   const virtualId = 'virtual:gpx-files'
   const resolvedId = '\0' + virtualId
@@ -13,7 +19,7 @@ function gpxManifestPlugin() {
 
   function getGpxFiles(): string[] {
     return fs.existsSync(filesDir)
-      ? fs.readdirSync(filesDir).filter((f: string) => f.endsWith('.gpx')).sort().reverse()
+      ? fs.readdirSync(filesDir).filter(isTrackFile).sort().reverse()
       : []
   }
 

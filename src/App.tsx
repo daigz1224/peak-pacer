@@ -214,6 +214,7 @@ function App() {
                   splits={analysis.splits}
                   onWallpaper={handleWallpaper}
                   generatingWallpaper={generatingWallpaper}
+                  autoCp={analysis.autoCp}
                 />
               </>
             )}
