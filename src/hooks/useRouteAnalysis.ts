@@ -3,6 +3,7 @@ import type { ParsedGpx, RunnerProfile, Segment, CpSplit, Climb } from '../types
 import { computeSegments } from '../lib/cp-splitter';
 import { computeSplits, predictFinishTime } from '../lib/pace-model';
 import { cumulativeDistances, detectClimbs } from '../lib/geo';
+import { buildTrackIndex, type TrackIndex } from '../lib/track-index';
 
 export interface RouteAnalysis {
   segments: Segment[];
@@ -15,6 +16,7 @@ export interface RouteAnalysis {
   cpPositions: { distance: number; name: string }[];
   climbs: Climb[];
   cpMarkers: { name: string; lat: number; lon: number }[];
+  trackIndex: TrackIndex;
 }
 
 export function useRouteAnalysis(
@@ -72,6 +74,8 @@ export function useRouteAnalysis(
       }),
     ];
 
+    const trackIndex = buildTrackIndex(gpx.trackPoints);
+
     return {
       segments,
       splits,
@@ -83,6 +87,7 @@ export function useRouteAnalysis(
       cpPositions,
       climbs,
       cpMarkers,
+      trackIndex,
     };
   }, [gpx, profile]);
 }

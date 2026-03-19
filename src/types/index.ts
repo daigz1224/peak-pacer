@@ -36,6 +36,7 @@ export interface RunnerProfile {
   targetTime: number | null; // minutes, null = auto
   itraPoints: number; // 200-900, primary predictor
   historicalRaces?: HistoricalRace[];
+  bodyWeightKg?: number; // optional, default ~70kg
 }
 
 export interface CpSplit {
@@ -73,6 +74,25 @@ export interface WeatherSummary {
   avgHumidity: number; // %
   dominantWindDirection: number; // degrees
   yearlyTemps?: YearlyTemperature[];
+}
+
+export interface NutritionTargets {
+  caloriesPerHour: number; // kcal/hr
+  fluidPerHour: number; // ml/hr
+  sodiumPerHour: number; // mg/hr
+}
+
+export interface CpNutrition {
+  cpName: string;
+  segmentTime: number; // minutes
+  cumulativeTime: number; // minutes
+  targets: NutritionTargets;
+  segmentCalories: number; // kcal
+  segmentFluid: number; // ml
+  segmentSodium: number; // mg
+  cumulativeCalories: number; // kcal
+  cumulativeFluid: number; // ml
+  cumulativeSodium: number; // mg
 }
 
 export const DEFAULT_PROFILE: RunnerProfile = {

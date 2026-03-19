@@ -1,16 +1,20 @@
-import { useState, useCallback, useEffect, useDeferredValue, lazy, Suspense } from 'react';
+import { useState, useCallback, useEffect, useDeferredValue, useRef, lazy, Suspense } from 'react';
 import type { ParsedGpx, RunnerProfile } from './types';
 import { DEFAULT_PROFILE } from './types';
 import { parseGpx } from './lib/gpx-parser';
 import gpxFiles from 'virtual:gpx-files';
 import { useRouteAnalysis } from './hooks/useRouteAnalysis';
 import { useWeatherForecast } from './hooks/useWeatherForecast';
+import { useHoverStore } from './hooks/useHoverSync';
+import { captureShareCard, shareImage, encodeShareUrl } from './lib/share';
 import { FileLoader } from './components/FileLoader';
 import { RunnerInputForm } from './components/RunnerInputForm';
 import { RaceSummary } from './components/RaceSummary';
 import { ElevationProfile } from './components/ElevationProfile';
 import { SplitTable } from './components/SplitTable';
 import { PaceBand } from './components/PaceBand';
+import { NutritionPlan } from './components/NutritionPlan';
+import { ShareCard } from './components/ShareCard';
 import { WeatherPanel } from './components/WeatherPanel';
 
 const RouteMap = lazy(() => import('./components/RouteMap').then(m => ({ default: m.RouteMap })));
@@ -19,6 +23,9 @@ function App() {
   const [gpx, setGpx] = useState<ParsedGpx | null>(null);
   const [currentFile, setCurrentFile] = useState<string | null>(null);
   const [profile, setProfile] = useState<RunnerProfile>(DEFAULT_PROFILE);
+  const [sharing, setSharing] = useState(false);
+  const hoverStore = useHoverStore();
+  const shareCardRef = useRef<HTMLDivElement>(null);
   const [raceDate, setRaceDate] = useState<string>(() => {
     const d = new Date();
     d.setDate(d.getDate() + ((7 - d.getDay()) % 7 || 7));
@@ -58,6 +65,38 @@ function App() {
 
   const { weather, loading: weatherLoading, error: weatherError } =
     useWeatherForecast(gpx?.trackPoints ?? null, raceDate || null);
+
+  const raceName = currentFile?.replace('.gpx', '') ?? gpx?.name ?? '';
+  const predictedTime = profile.targetTime ?? analysis?.predictedTime ?? 0;
+
+  const handleShare = useCallback(async () => {
+    if (!shareCardRef.current || sharing) return;
+    setSharing(true);
+    try {
+      // Small delay for canvas to render
+      await new Promise((r) => requestAnimationFrame(r));
+      const blob = await captureShareCard(shareCardRef.current);
+      await shareImage(blob, raceName);
+    } catch (e) {
+      console.error('Share failed:', e);
+    } finally {
+      setSharing(false);
+    }
+  }, [raceName, sharing]);
+
+  const handleCopyLink = useCallback(() => {
+    if (!analysis) return;
+    const url = encodeShareUrl({
+      name: raceName,
+      dist: analysis.totalDistance,
+      gain: analysis.totalGain,
+      loss: analysis.totalLoss,
+      itra: profile.itraPoints,
+      time: predictedTime,
+      cp: analysis.splits.length,
+    });
+    navigator.clipboard.writeText(url).catch(() => {});
+  }, [analysis, raceName, profile.itraPoints, predictedTime]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -121,14 +160,15 @@ function App() {
             ) : (
               <>
                 <RaceSummary
-                  name={currentFile?.replace('.gpx', '') ?? gpx!.name}
+                  name={raceName}
                   totalDistance={analysis.totalDistance}
                   totalGain={analysis.totalGain}
                   totalLoss={analysis.totalLoss}
-                  predictedTime={
-                    profile.targetTime ?? analysis.predictedTime
-                  }
+                  predictedTime={predictedTime}
                   cpCount={analysis.splits.length}
+                  onShare={handleShare}
+                  onCopyLink={handleCopyLink}
+                  sharing={sharing}
                 />
                 <Suspense fallback={
                   <div className="bg-white rounded-xl shadow-sm p-5">
@@ -144,20 +184,44 @@ function App() {
                   <RouteMap
                     trackPoints={gpx!.trackPoints}
                     cpMarkers={analysis.cpMarkers}
+                    hoverStore={hoverStore}
+                    trackIndex={analysis.trackIndex}
                   />
                 </Suspense>
                 <ElevationProfile
                   data={analysis.distanceProfile}
                   cpPositions={analysis.cpPositions}
                   climbs={analysis.climbs}
+                  hoverStore={hoverStore}
                 />
                 <SplitTable splits={analysis.splits} />
-                <PaceBand splits={analysis.splits} raceName={currentFile?.replace('.gpx', '') ?? gpx!.name} />
+                <NutritionPlan
+                  splits={analysis.splits}
+                  weather={weather}
+                  bodyWeightKg={profile.bodyWeightKg}
+                  raceName={raceName}
+                />
+                <PaceBand splits={analysis.splits} raceName={raceName} />
               </>
             )}
           </div>
         </div>
       </main>
+
+      {/* Hidden share card for image capture */}
+      {analysis && (
+        <ShareCard
+          ref={shareCardRef}
+          raceName={raceName}
+          totalDistance={analysis.totalDistance}
+          totalGain={analysis.totalGain}
+          totalLoss={analysis.totalLoss}
+          predictedTime={predictedTime}
+          cpCount={analysis.splits.length}
+          distanceProfile={analysis.distanceProfile}
+          weather={weather}
+        />
+      )}
 
       <footer className="max-w-6xl mx-auto px-4 py-6 text-center print:hidden">
         <p className="text-xs text-slate-400 italic">

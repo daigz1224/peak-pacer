@@ -1,8 +1,11 @@
-import { useMemo, useEffect, useState, useCallback } from 'react';
+import { useMemo, useEffect, useState, useCallback, useRef } from 'react';
 import { MapContainer, TileLayer, Polyline, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { GpxPoint } from '../types';
+import type { HoverStore } from '../hooks/useHoverSync';
+import type { TrackIndex } from '../lib/track-index';
+import { distanceToLatLng, latLngToDistance } from '../lib/track-index';
 
 type TrackStyle = 'gradient' | 'solid';
 const TRACK_STYLES: { key: TrackStyle; name: string }[] = [
@@ -45,6 +48,90 @@ function ResetButton({ bounds }: { bounds: L.LatLngBounds }) {
   );
 }
 
+/** Hover marker that follows the chart hover position */
+function HoverMarker({
+  hoverStore,
+  trackIndex,
+}: {
+  hoverStore: HoverStore;
+  trackIndex: TrackIndex;
+}) {
+  const map = useMap();
+  const markerRef = useRef<L.CircleMarker | null>(null);
+
+  useEffect(() => {
+    const marker = L.circleMarker([0, 0], {
+      radius: 7,
+      fillColor: '#3b82f6',
+      fillOpacity: 0,
+      weight: 2,
+      color: '#ffffff',
+      opacity: 0,
+    }).addTo(map);
+    markerRef.current = marker;
+
+    const unsub = hoverStore.subscribe(() => {
+      const dist = hoverStore.getDistance();
+      if (dist == null) {
+        marker.setStyle({ opacity: 0, fillOpacity: 0 });
+        return;
+      }
+      const pos = distanceToLatLng(dist, trackIndex);
+      if (pos) {
+        marker.setLatLng([pos.lat, pos.lon]);
+        marker.setStyle({ opacity: 1, fillOpacity: 1 });
+      }
+    });
+
+    return () => {
+      unsub();
+      marker.remove();
+    };
+  }, [map, hoverStore, trackIndex]);
+
+  return null;
+}
+
+/** Invisible wide polyline for hover hit detection */
+function TrackHitArea({
+  positions,
+  hoverStore,
+  trackIndex,
+}: {
+  positions: [number, number][];
+  hoverStore: HoverStore;
+  trackIndex: TrackIndex;
+}) {
+  const rafId = useRef(0);
+
+  const handleMouseMove = useCallback(
+    (e: L.LeafletMouseEvent) => {
+      cancelAnimationFrame(rafId.current);
+      rafId.current = requestAnimationFrame(() => {
+        const dist = latLngToDistance(e.latlng.lat, e.latlng.lng, trackIndex);
+        hoverStore.setDistance(dist);
+      });
+    },
+    [hoverStore, trackIndex],
+  );
+
+  const handleMouseOut = useCallback(() => {
+    cancelAnimationFrame(rafId.current);
+    hoverStore.setDistance(null);
+  }, [hoverStore]);
+
+  return (
+    <Polyline
+      positions={positions}
+      pathOptions={{ weight: 20, opacity: 0, fill: false }}
+      eventHandlers={{
+        mousemove: handleMouseMove,
+        mouseout: handleMouseOut,
+      }}
+    />
+  );
+}
+
 interface CpMarker {
   name: string;
   lat: number;
@@ -54,6 +141,8 @@ interface CpMarker {
 interface Props {
   trackPoints: GpxPoint[];
   cpMarkers: CpMarker[];
+  hoverStore?: HoverStore;
+  trackIndex?: TrackIndex;
 }
 
 // Circle dot + label as a single divIcon
@@ -71,23 +160,20 @@ function makeCpIcon(color: string, label: string) {
 
 /** Map gradient (%) to a color: uphill → red, downhill → blue, flat → gray */
 function gradientColor(gradient: number): string {
-  // Clamp to ±30% for color mapping
   const clamped = Math.max(-30, Math.min(30, gradient));
-  const intensity = Math.abs(clamped) / 30; // 0..1
+  const intensity = Math.abs(clamped) / 30;
   if (clamped > 0.5) {
-    // Uphill: light orange → deep red
     const r = 220 + Math.round(35 * intensity);
     const g = Math.round(160 * (1 - intensity));
     const b = Math.round(60 * (1 - intensity));
     return `rgb(${r},${g},${b})`;
   } else if (clamped < -0.5) {
-    // Downhill: light teal → deep blue
     const r = Math.round(80 * (1 - intensity));
     const g = Math.round(180 * (1 - intensity));
     const b = 180 + Math.round(75 * intensity);
     return `rgb(${r},${g},${b})`;
   }
-  return '#888'; // flat
+  return '#888';
 }
 
 interface SampledPoint {
@@ -96,11 +182,10 @@ interface SampledPoint {
   ele: number;
 }
 
-export function RouteMap({ trackPoints, cpMarkers }: Props) {
+export function RouteMap({ trackPoints, cpMarkers, hoverStore, trackIndex }: Props) {
   const [tileIdx, setTileIdx] = useState(0);
   const [trackStyle, setTrackStyle] = useState<TrackStyle>('gradient');
 
-  // Sample track for performance (max 1000 points), keeping elevation
   const sampled = useMemo(() => {
     const step = Math.max(1, Math.floor(trackPoints.length / 1000));
     const pts: SampledPoint[] = [];
@@ -116,14 +201,12 @@ export function RouteMap({ trackPoints, cpMarkers }: Props) {
     return pts;
   }, [trackPoints]);
 
-  // Build colored segments from elevation gradient
   const segments = useMemo(() => {
     if (sampled.length < 2) return [];
     const segs: { positions: [number, number][]; color: string }[] = [];
     for (let i = 0; i < sampled.length - 1; i++) {
       const a = sampled[i];
       const b = sampled[i + 1];
-      // Approximate horizontal distance in meters (quick estimate)
       const dlat = (b.lat - a.lat) * 111320;
       const dlon = (b.lon - a.lon) * 111320 * Math.cos((a.lat * Math.PI) / 180);
       const hDist = Math.sqrt(dlat * dlat + dlon * dlon);
@@ -140,6 +223,11 @@ export function RouteMap({ trackPoints, cpMarkers }: Props) {
     if (sampled.length === 0) return undefined;
     return L.latLngBounds(sampled.map((p) => [p.lat, p.lon]));
   }, [sampled]);
+
+  const hitPositions = useMemo(
+    () => sampled.map((p) => [p.lat, p.lon] as [number, number]),
+    [sampled],
+  );
 
   const icons = useMemo(() => {
     return cpMarkers.map((cp, i) => {
@@ -224,6 +312,16 @@ export function RouteMap({ trackPoints, cpMarkers }: Props) {
               positions={sampled.map((p) => [p.lat, p.lon] as [number, number])}
               pathOptions={{ color: SOLID_COLOR, weight: 4, opacity: 0.9 }}
             />
+          )}
+          {hoverStore && trackIndex && (
+            <>
+              <TrackHitArea
+                positions={hitPositions}
+                hoverStore={hoverStore}
+                trackIndex={trackIndex}
+              />
+              <HoverMarker hoverStore={hoverStore} trackIndex={trackIndex} />
+            </>
           )}
           {cpMarkers.map((cp, i) => (
             <Marker

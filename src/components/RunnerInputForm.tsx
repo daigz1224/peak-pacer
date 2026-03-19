@@ -62,6 +62,30 @@ export function RunnerInputForm({ profile, predictedTime, onChange }: Props) {
         }
       />
 
+      {/* Body weight (optional) */}
+      <div>
+        <label className="block text-sm text-slate-600 mb-1">
+          体重
+          <span className="ml-1 text-xs text-slate-400">(可选，默认 70kg)</span>
+        </label>
+        <div className="flex items-center gap-1">
+          <input
+            type="number"
+            min={30}
+            max={150}
+            step={1}
+            value={profile.bodyWeightKg ?? ''}
+            placeholder="70"
+            onChange={(e) => {
+              const val = e.target.value;
+              onChange({ ...profile, bodyWeightKg: val ? +val : undefined });
+            }}
+            className={`${inputClass} w-20`}
+          />
+          <span className="text-slate-400 text-sm">kg</span>
+        </div>
+      </div>
+
       {/* Target time */}
       <div>
         <label className="flex items-center gap-2 text-sm text-slate-600 mb-1">

@@ -43,7 +43,7 @@ body {
   background: transparent;
 }
 
-/* Print styles for pace band */
+/* Print styles for pace band and crew sheet */
 @media print {
   body * {
     visibility: hidden;
@@ -60,5 +60,27 @@ body {
     top: 0;
     width: 100%;
     border-width: 1px !important;
+  }
+
+  /* Crew sheet print mode */
+  body.print-crew-sheet * {
+    visibility: hidden;
+  }
+
+  body.print-crew-sheet .crew-sheet,
+  body.print-crew-sheet .crew-sheet * {
+    visibility: visible !important;
+  }
+
+  body.print-crew-sheet .crew-sheet {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  body.print-crew-sheet .pace-band,
+  body.print-crew-sheet .pace-band * {
+    visibility: hidden !important;
   }
 }
