@@ -30,6 +30,8 @@ export function ElevationProfile({ data, cpPositions, climbs, hoverStore }: Prop
   const minEle = Math.min(...data.map((d) => d.elevation));
   const maxEle = Math.max(...data.map((d) => d.elevation));
   const padding = (maxEle - minEle) * 0.1;
+  // Never go below 0 on Y-axis — negative elevation is nonsensical for trail races
+  const yMin = Math.max(0, Math.floor(minEle - padding));
   const maxDist = data[data.length - 1].distance;
 
   const maxGain = climbs.length > 0 ? Math.max(...climbs.map((c) => c.gain)) : 1;
@@ -115,12 +117,14 @@ export function ElevationProfile({ data, cpPositions, climbs, hoverStore }: Prop
             </defs>
             <XAxis
               dataKey="distance"
+              type="number"
+              domain={[0, maxDist]}
               tickFormatter={(v: number) => `${v.toFixed(0)}`}
               tick={{ fontSize: 11 }}
               label={{ value: 'km', position: 'insideBottomRight', offset: -5, fontSize: 11 }}
             />
             <YAxis
-              domain={[Math.floor(minEle - padding), Math.ceil(maxEle + padding)]}
+              domain={[yMin, Math.ceil(maxEle + padding)]}
               tickFormatter={(v: number) => `${v}`}
               tick={{ fontSize: 11 }}
               width={45}
@@ -139,6 +143,9 @@ export function ElevationProfile({ data, cpPositions, climbs, hoverStore }: Prop
               const g = Math.round(115 - t * 55);
               const b = Math.round(22 - t * 10);
               const labelColor = `rgb(${r},${g},${b})`;
+              // Only show label if climb spans enough of the chart to fit text
+              const climbWidthPct = (climb.endDist - climb.startDist) / maxDist;
+              const showLabel = climbWidthPct > 0.06;
               return (
                 <ReferenceArea
                   key={`climb-${i}`}
@@ -149,14 +156,16 @@ export function ElevationProfile({ data, cpPositions, climbs, hoverStore }: Prop
                   stroke="#f97316"
                   strokeOpacity={strokeOpacity}
                 >
-                  <Label
-                    value={`↑${climb.gain}m`}
-                    position="insideTop"
-                    fontSize={10}
-                    fontWeight={600}
-                    fill={labelColor}
-                    offset={2}
-                  />
+                  {showLabel && (
+                    <Label
+                      value={`↑${climb.gain}m`}
+                      position="insideTop"
+                      fontSize={10}
+                      fontWeight={600}
+                      fill={labelColor}
+                      offset={2}
+                    />
+                  )}
                 </ReferenceArea>
               );
             })}
