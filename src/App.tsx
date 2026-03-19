@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useDeferredValue, useRef, lazy, Suspense } from 'react';
 import type { ParsedGpx, RunnerProfile } from './types';
 import { DEFAULT_PROFILE } from './types';
-import { parseGpx } from './lib/gpx-parser';
+import { parseTrackFile, detectFormat } from './lib/track-parser';
 import gpxFiles from 'virtual:gpx-files';
 import { useRouteAnalysis } from './hooks/useRouteAnalysis';
 import { useWeatherForecast } from './hooks/useWeatherForecast';
@@ -32,13 +32,14 @@ function App() {
     return d.toISOString().slice(0, 10);
   });
 
-  const handleGpxLoad = useCallback((xml: string, fileName: string) => {
+  const handleTrackLoad = useCallback((xml: string, fileName: string) => {
     try {
-      const parsed = parseGpx(xml);
+      const format = detectFormat(fileName, xml);
+      const parsed = parseTrackFile(xml, format);
       setGpx(parsed);
       setCurrentFile(fileName);
     } catch {
-      alert('GPX 文件解析失败，请检查文件格式');
+      alert('轨迹文件解析失败，请检查文件格式');
     }
   }, []);
 
@@ -54,14 +55,14 @@ function App() {
       })
       .then((xml) => {
         if (xml) {
-          handleGpxLoad(xml, target);
+          handleTrackLoad(xml, target);
           if (shared?.itra) setProfile((p) => ({ ...p, itraPoints: shared.itra }));
         }
       })
       .catch(() => {});
     // Clear hash after loading so URL stays clean
     if (shared) history.replaceState(null, '', window.location.pathname);
-  }, [handleGpxLoad]);
+  }, [handleTrackLoad]);
 
   // Defer heavy computation so UI updates immediately on track switch
   const deferredGpx = useDeferredValue(gpx);
@@ -72,7 +73,7 @@ function App() {
   const { weather, loading: weatherLoading, error: weatherError } =
     useWeatherForecast(gpx?.trackPoints ?? null, raceDate || null);
 
-  const raceName = currentFile?.replace('.gpx', '') ?? gpx?.name ?? '';
+  const raceName = currentFile?.replace(/\.(gpx|kml|tcx)$/i, '') ?? gpx?.name ?? '';
   // Use the last split's cumulative time — it already accounts for strategy factor
   const predictedTime = analysis?.splits.length
     ? analysis.splits[analysis.splits.length - 1].cumulativeTime
@@ -131,7 +132,7 @@ function App() {
           {/* Sidebar */}
           <aside className="space-y-6 print:hidden">
             <div className="bg-white rounded-xl shadow-sm p-5 space-y-6">
-              <FileLoader onLoad={handleGpxLoad} currentFile={currentFile} />
+              <FileLoader onLoad={handleTrackLoad} currentFile={currentFile} />
               <RunnerInputForm
                 profile={profile}
                 predictedTime={analysis?.predictedTime ?? null}
@@ -168,9 +169,9 @@ function App() {
                   <path d="M20,75 L40,40 L48,52 L60,25 L72,52 L80,40 L100,75 Z" />
                   <circle cx="90" cy="18" r="8" className="text-amber-200" fill="currentColor" opacity="0.6" />
                 </svg>
-                <p className="text-lg text-slate-500">加载 GPX 轨迹文件开始分析</p>
+                <p className="text-lg text-slate-500">加载轨迹文件开始分析</p>
                 <p className="text-sm mt-2 text-slate-400">
-                  选择左侧预设赛事或上传自己的 GPX 文件
+                  选择左侧预设赛事或上传轨迹文件
                 </p>
               </div>
             ) : (

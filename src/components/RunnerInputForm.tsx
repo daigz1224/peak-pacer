@@ -324,28 +324,6 @@ function HistoricalRacesSection({
 const ALGO_DESC =
   '基于 ITRA 积分推算平路基速，逐 GPS 点计算梯度调整（上坡减速、缓下坡加速、陡下坡制动），42km 后叠加超马疲劳因子，累加得出总时间';
 
-function AlgoTipCustom({ text }: { text: string }) {
-  const [show, setShow] = useState(false);
-  return (
-    <span className="relative inline-block ml-0.5">
-      <button
-        type="button"
-        className="w-4 h-4 inline-flex items-center justify-center rounded-full bg-slate-200/60 text-slate-500 text-[10px] font-bold leading-none hover:bg-slate-300/60 cursor-help"
-        onClick={() => setShow(!show)}
-        onMouseEnter={() => setShow(true)}
-        onMouseLeave={() => setShow(false)}
-      >
-        ?
-      </button>
-      {show && (
-        <div className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2.5 py-1.5 text-xs text-slate-700 bg-white border border-slate-200 rounded-lg shadow-lg w-52 whitespace-normal leading-relaxed">
-          {text}
-        </div>
-      )}
-    </span>
-  );
-}
-
 function AlgoTip() {
   const [show, setShow] = useState(false);
   return (

@@ -88,7 +88,7 @@ function WeatherContent({ weather }: { weather: WeatherSummary }) {
         <div>
           <div className="text-xs font-medium text-slate-500 mb-2">近三年比赛日气温</div>
           <div className="space-y-2">
-            {raceDayTemps.map((t, i) => {
+            {raceDayTemps.map((t) => {
               const leftPct = ((t.low - scaleMin) / scaleRange) * 100;
               const widthPct = ((t.high - t.low) / scaleRange) * 100;
               return (
