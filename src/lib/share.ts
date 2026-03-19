@@ -3,7 +3,7 @@ import html2canvas from 'html2canvas-pro';
 /** Capture a DOM element as a PNG blob */
 export async function captureShareCard(element: HTMLElement): Promise<Blob> {
   const canvas = await html2canvas(element, {
-    scale: 2,
+    scale: 3,
     useCORS: true,
     backgroundColor: null,
   });

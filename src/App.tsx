@@ -227,6 +227,8 @@ function App() {
           splits={analysis.splits}
           climbs={analysis.climbs}
           itraPoints={profile.itraPoints}
+          trackPoints={gpx!.trackPoints}
+          cpMarkers={analysis.cpMarkers}
         />
       )}
 
