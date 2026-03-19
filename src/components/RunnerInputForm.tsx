@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import type { RunnerProfile, HistoricalRace } from '../types';
+import type { RunnerProfile, HistoricalRace, RaceStrategy, TimeRange } from '../types';
 
 interface Props {
   profile: RunnerProfile;
   predictedTime: number | null;
+  timeRange: TimeRange | null;
   onChange: (profile: RunnerProfile) => void;
 }
 
@@ -21,9 +22,16 @@ function parseTimeToMinutes(h: number, m: number): number {
 
 const inputClass = 'w-16 px-2 py-1.5 text-center border border-slate-200 rounded-lg text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 outline-none transition-colors';
 
-export function RunnerInputForm({ profile, predictedTime, onChange }: Props) {
+const STRATEGIES: { key: RaceStrategy; label: string; icon: string }[] = [
+  { key: 'conservative', label: '保守', icon: '🛡' },
+  { key: 'moderate', label: '稳健', icon: '🎯' },
+  { key: 'aggressive', label: '激进', icon: '🔥' },
+];
+
+export function RunnerInputForm({ profile, predictedTime, timeRange, onChange }: Props) {
   const tH = profile.targetTime != null ? Math.floor(profile.targetTime / 60) : 0;
   const tM = profile.targetTime != null ? Math.floor(profile.targetTime % 60) : 0;
+  const activeStrategy = profile.strategy ?? 'moderate';
 
   return (
     <div className="space-y-4">
@@ -50,8 +58,13 @@ export function RunnerInputForm({ profile, predictedTime, onChange }: Props) {
           onChange={(e) =>
             onChange({ ...profile, itraPoints: +e.target.value })
           }
-          className={`${inputClass} w-24`}
+          className={`${inputClass} w-24 ${profile.itraPoints < 200 || profile.itraPoints > 900 ? 'border-amber-400' : ''}`}
         />
+        {(profile.itraPoints < 200 || profile.itraPoints > 900) && (
+          <p className="text-[11px] text-amber-600 mt-1">
+            建议范围 200-900，当前值将被修正为 {Math.max(200, Math.min(900, profile.itraPoints))}
+          </p>
+        )}
       </div>
 
       {/* Historical races */}
@@ -64,9 +77,10 @@ export function RunnerInputForm({ profile, predictedTime, onChange }: Props) {
 
       {/* Body weight (optional) */}
       <div>
-        <label className="block text-sm text-slate-600 mb-1">
+        <label className="flex items-center gap-1 text-sm text-slate-600 mb-1">
           体重
-          <span className="ml-1 text-xs text-slate-400">(可选，默认 70kg)</span>
+          <span className="text-xs text-slate-400">(可选，默认 70kg)</span>
+          <AlgoTipCustom text="仅用于计算补给计划(热量/饮水)，不影响配速预测" />
         </label>
         <div className="flex items-center gap-1">
           <input
@@ -86,67 +100,125 @@ export function RunnerInputForm({ profile, predictedTime, onChange }: Props) {
         </div>
       </div>
 
-      {/* Target time */}
+      {/* Race strategy + time range */}
       <div>
-        <label className="flex items-center gap-2 text-sm text-slate-600 mb-1">
-          <span>目标完赛时间</span>
-          {profile.targetTime == null && predictedTime && (
-            <span className="text-xs text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded inline-flex items-center gap-0.5">
-              自动推算: {formatTime(predictedTime)}
-              <AlgoTip />
-            </span>
-          )}
+        <label className="flex items-center gap-2 text-sm text-slate-600 mb-2">
+          <span>比赛策略</span>
+          <AlgoTip />
         </label>
-        <div className="flex items-center gap-1">
-          <input
-            type="number"
-            min={1}
-            max={30}
-            value={profile.targetTime != null ? tH : ''}
-            placeholder={predictedTime ? String(Math.floor(predictedTime / 60)) : '-'}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (val === '') {
-                onChange({ ...profile, targetTime: null });
-              } else {
-                onChange({
-                  ...profile,
-                  targetTime: parseTimeToMinutes(+val, tM),
-                });
-              }
-            }}
-            className={inputClass}
-          />
-          <span className="text-slate-400">时</span>
-          <input
-            type="number"
-            min={0}
-            max={59}
-            value={profile.targetTime != null ? tM : ''}
-            placeholder={predictedTime ? String(Math.floor(predictedTime % 60)).padStart(2, '0') : '-'}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (val === '' && !tH) {
-                onChange({ ...profile, targetTime: null });
-              } else {
-                onChange({
-                  ...profile,
-                  targetTime: parseTimeToMinutes(tH, +val),
-                });
-              }
-            }}
-            className={inputClass}
-          />
-          <span className="text-slate-400">分</span>
-          {profile.targetTime != null && (
-            <button
-              onClick={() => onChange({ ...profile, targetTime: null })}
-              className="text-xs text-slate-400 hover:text-slate-600 ml-1"
-              title="重置为自动推算"
-            >
-              重置
-            </button>
-          )}
+
+        {/* Strategy buttons */}
+        <div className="flex gap-1.5 mb-3">
+          {STRATEGIES.map(({ key, label, icon }) => {
+            const isActive = profile.targetTime == null && activeStrategy === key;
+            const isDisabled = profile.targetTime != null;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => onChange({ ...profile, strategy: key, targetTime: null })}
+                className={`flex-1 px-2 py-1.5 text-xs rounded-lg border transition-all ${
+                  isActive
+                    ? 'bg-emerald-50 border-emerald-300 text-emerald-700 font-medium shadow-sm'
+                    : isDisabled
+                      ? 'border-slate-100 text-slate-300 cursor-default'
+                      : 'border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700'
+                }`}
+              >
+                <span className="mr-1">{icon}</span>{label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Time range bar */}
+        {timeRange && profile.targetTime == null && (
+          <div className="mb-3 px-1">
+            <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+              <span>激进</span>
+              <span>稳健</span>
+              <span>保守</span>
+            </div>
+            <div className="relative h-1.5 bg-slate-100 rounded-full">
+              <div className="absolute inset-y-0 left-0 right-0 bg-gradient-to-r from-emerald-300 via-emerald-200 to-amber-200 rounded-full" />
+              {/* Active strategy indicator */}
+              <div
+                className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white shadow-sm transition-all"
+                style={{
+                  left: activeStrategy === 'aggressive' ? '0%' : activeStrategy === 'moderate' ? '50%' : '100%',
+                  transform: `translate(-50%, -50%)`,
+                }}
+              />
+            </div>
+            <div className="flex items-center justify-between text-xs font-medium text-slate-600 mt-1">
+              <span>{formatTime(timeRange.optimistic)}</span>
+              <span className="text-emerald-600">{formatTime(timeRange.target)}</span>
+              <span>{formatTime(timeRange.conservative)}</span>
+            </div>
+            {!(profile.historicalRaces && profile.historicalRaces.length > 0) && (
+              <p className="text-[10px] text-slate-400 mt-1.5 text-center">
+                添加历史赛事可收窄预测区间
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Manual target time override */}
+        <div>
+          <label className="flex items-center gap-2 text-xs text-slate-500 mb-1">
+            <span>或手动指定完赛时间</span>
+          </label>
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              min={1}
+              max={30}
+              value={profile.targetTime != null ? tH : ''}
+              placeholder={predictedTime ? String(Math.floor(predictedTime / 60)) : '-'}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '') {
+                  onChange({ ...profile, targetTime: null });
+                } else {
+                  onChange({
+                    ...profile,
+                    targetTime: parseTimeToMinutes(+val, tM),
+                  });
+                }
+              }}
+              className={inputClass}
+            />
+            <span className="text-slate-400">时</span>
+            <input
+              type="number"
+              min={0}
+              max={59}
+              value={profile.targetTime != null ? tM : ''}
+              placeholder={predictedTime ? String(Math.floor(predictedTime % 60)).padStart(2, '0') : '-'}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '' && !tH) {
+                  onChange({ ...profile, targetTime: null });
+                } else {
+                  onChange({
+                    ...profile,
+                    targetTime: parseTimeToMinutes(tH, +val),
+                  });
+                }
+              }}
+              className={inputClass}
+            />
+            <span className="text-slate-400">分</span>
+            {profile.targetTime != null && (
+              <button
+                onClick={() => onChange({ ...profile, targetTime: null })}
+                className="text-xs text-emerald-600 hover:text-emerald-700 ml-1"
+                title="重置为策略推算"
+              >
+                重置
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -234,6 +306,28 @@ function HistoricalRacesSection({
 
 const ALGO_DESC =
   '基于 ITRA 积分推算平路基速，逐 GPS 点计算梯度调整（上坡减速、缓下坡加速、陡下坡制动），42km 后叠加超马疲劳因子，累加得出总时间';
+
+function AlgoTipCustom({ text }: { text: string }) {
+  const [show, setShow] = useState(false);
+  return (
+    <span className="relative inline-block ml-0.5">
+      <button
+        type="button"
+        className="w-4 h-4 inline-flex items-center justify-center rounded-full bg-slate-200/60 text-slate-500 text-[10px] font-bold leading-none hover:bg-slate-300/60 cursor-help"
+        onClick={() => setShow(!show)}
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+      >
+        ?
+      </button>
+      {show && (
+        <div className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2.5 py-1.5 text-xs text-slate-700 bg-white border border-slate-200 rounded-lg shadow-lg w-52 whitespace-normal leading-relaxed">
+          {text}
+        </div>
+      )}
+    </span>
+  );
+}
 
 function AlgoTip() {
   const [show, setShow] = useState(false);
