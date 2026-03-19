@@ -1,7 +1,10 @@
 import type { CpSplit } from '../types';
+import { difficultyColors, isHardSegment } from '../lib/difficulty';
 
 interface Props {
   splits: CpSplit[];
+  onWallpaper?: () => void;
+  generatingWallpaper?: boolean;
 }
 
 function formatPace(minPerKm: number): string {
@@ -18,22 +21,40 @@ function formatTime(minutes: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-function difficultyColor(pace: number): string {
-  if (pace < 7) return 'bg-emerald-500';
-  if (pace <= 10) return 'bg-amber-500';
-  return 'bg-red-500';
-}
-
-export function SplitTable({ splits }: Props) {
+export function SplitTable({ splits, onWallpaper, generatingWallpaper }: Props) {
+  const dotColors = difficultyColors(splits, 'tailwind');
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-5 pt-5 pb-2 flex items-center gap-2">
-        <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <rect x="1" y="2" width="14" height="12" rx="1" />
-          <path d="M1 6h14M5 6v8M11 6v8" />
-        </svg>
-        CP 分段配速
-      </h3>
+      <div className="flex items-center justify-between px-5 pt-5 pb-2">
+        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+          <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <rect x="1" y="2" width="14" height="12" rx="1" />
+            <path d="M1 6h14M5 6v8M11 6v8" />
+          </svg>
+          CP 分段配速
+        </h3>
+        {onWallpaper && (
+          <button
+            onClick={onWallpaper}
+            disabled={generatingWallpaper}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors disabled:opacity-50 print:hidden"
+            title="生成手机壁纸"
+          >
+            {generatingWallpaper ? (
+              <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="4" y="1" width="8" height="14" rx="1.5" />
+                <path d="M7 12h2" />
+              </svg>
+            )}
+            生成壁纸
+          </button>
+        )}
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -51,8 +72,8 @@ export function SplitTable({ splits }: Props) {
           </thead>
           <tbody>
             {splits.map((split, i) => {
-              const isHard = split.estimatedPace > 10;
-              const rowBg = isHard
+              const hard = isHardSegment(splits, i);
+              const rowBg = hard
                 ? 'bg-orange-50/70'
                 : i % 2 === 1
                   ? 'bg-slate-50/50'
@@ -63,7 +84,7 @@ export function SplitTable({ splits }: Props) {
                   className={`border-t border-slate-100 ${rowBg}`}
                 >
                   <td className="px-2 py-2.5 text-center">
-                    <span className={`inline-block w-2 h-2 rounded-full ${difficultyColor(split.estimatedPace)}`} />
+                    <span className={`inline-block w-2 h-2 rounded-full ${dotColors[i]}`} />
                   </td>
                   <td className="px-4 py-2.5 font-medium text-slate-900">
                     {split.cpName}

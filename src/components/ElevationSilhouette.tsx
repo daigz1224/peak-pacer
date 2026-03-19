@@ -5,9 +5,10 @@ interface Props {
   width: number;
   height: number;
   theme?: 'dark' | 'light';
+  cpMarkers?: { distance: number; name: string }[];
 }
 
-export function ElevationSilhouette({ data, width, height, theme = 'dark' }: Props) {
+export function ElevationSilhouette({ data, width, height, theme = 'dark', cpMarkers }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -63,7 +64,41 @@ export function ElevationSilhouette({ data, width, height, theme = 'dark' }: Pro
     ctx.strokeStyle = theme === 'light' ? 'rgba(5, 150, 105, 0.7)' : 'rgba(16, 185, 129, 0.9)';
     ctx.lineWidth = 1.5;
     ctx.stroke();
-  }, [data, width, height]);
+
+    // Draw CP markers
+    if (cpMarkers && cpMarkers.length > 0) {
+      const markerColor = theme === 'light' ? 'rgba(100,116,139,0.4)' : 'rgba(148,163,184,0.3)';
+      const dotColor = theme === 'light' ? 'rgba(100,116,139,0.6)' : 'rgba(251,191,36,0.7)';
+      for (const cp of cpMarkers) {
+        const x = toX(cp.distance);
+        // Find closest elevation for this distance
+        let elY = height * 0.5;
+        for (let j = 0; j < data.length - 1; j++) {
+          if (data[j].distance <= cp.distance && data[j + 1].distance >= cp.distance) {
+            const t = (cp.distance - data[j].distance) / (data[j + 1].distance - data[j].distance || 1);
+            const ele = data[j].elevation + t * (data[j + 1].elevation - data[j].elevation);
+            elY = toY(ele);
+            break;
+          }
+        }
+        // Dashed vertical line from bottom to profile
+        ctx.save();
+        ctx.setLineDash([2, 3]);
+        ctx.strokeStyle = markerColor;
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(x, height);
+        ctx.lineTo(x, elY);
+        ctx.stroke();
+        ctx.restore();
+        // Small dot on the profile line
+        ctx.beginPath();
+        ctx.arc(x, elY, 2, 0, Math.PI * 2);
+        ctx.fillStyle = dotColor;
+        ctx.fill();
+      }
+    }
+  }, [data, width, height, cpMarkers]);
 
   return (
     <canvas

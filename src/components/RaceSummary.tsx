@@ -8,8 +8,7 @@ interface Props {
   predictedTime: number;
   cpCount: number;
   onShare?: () => void;
-  onCopyLink?: () => void;
-  sharing?: boolean;
+  linkCopied?: boolean;
 }
 
 function formatTime(minutes: number): string {
@@ -48,8 +47,7 @@ export function RaceSummary({
   predictedTime,
   cpCount,
   onShare,
-  onCopyLink,
-  sharing,
+  linkCopied,
 }: Props) {
   const itraEffort = Math.round(totalDistance + totalGain / 100);
 
@@ -61,40 +59,26 @@ export function RaceSummary({
           <path d="M1,15 L5,5 L7,9 L10,2 L13,9 L15,5 L19,15 Z" />
         </svg>
         <h2 className="text-lg font-bold text-slate-900 flex-1">{name}</h2>
-        {onShare && (
-          <div className="flex items-center gap-1 print:hidden">
+        <div className="flex items-center gap-1 print:hidden">
+          {onShare && (
             <button
               onClick={onShare}
-              disabled={sharing}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50"
-              title="分享为图片"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+              title="分享赛道链接"
             >
-              {sharing ? (
-                <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              {linkCopied ? (
+                <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 8l3 3 7-7" />
                 </svg>
               ) : (
                 <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M4 8l4-4 4 4M8 4v8" />
-                  <path d="M2 12v2h12v-2" />
-                </svg>
-              )}
-              分享
-            </button>
-            {onCopyLink && (
-              <button
-                onClick={onCopyLink}
-                className="flex items-center gap-1 px-2 py-1.5 text-xs text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-                title="复制链接"
-              >
-                <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M6 10l4-4M5 7L3 9a2.83 2.83 0 004 4l2-2M11 9l2-2a2.83 2.83 0 00-4-4L7 5" />
                 </svg>
-              </button>
-            )}
-          </div>
-        )}
+              )}
+              {linkCopied ? '已复制' : '分享'}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Compact stats row */}

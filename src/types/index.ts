@@ -44,7 +44,6 @@ export interface RunnerProfile {
   targetTime: number | null; // minutes, null = auto
   itraPoints: number; // 200-900, primary predictor
   historicalRaces?: HistoricalRace[];
-  bodyWeightKg?: number; // optional, default ~70kg
   strategy?: RaceStrategy; // default 'moderate'
 }
 

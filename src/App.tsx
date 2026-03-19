@@ -6,15 +6,13 @@ import gpxFiles from 'virtual:gpx-files';
 import { useRouteAnalysis } from './hooks/useRouteAnalysis';
 import { useWeatherForecast } from './hooks/useWeatherForecast';
 import { useHoverStore } from './hooks/useHoverSync';
-import { captureShareCard, shareImage, encodeShareUrl } from './lib/share';
+import { captureShareCard, shareImage, encodeShareUrl, decodeShareUrl } from './lib/share';
 import { FileLoader } from './components/FileLoader';
 import { RunnerInputForm } from './components/RunnerInputForm';
 import { RaceSummary } from './components/RaceSummary';
 import { ElevationProfile } from './components/ElevationProfile';
 import { SplitTable } from './components/SplitTable';
-import { PaceBand } from './components/PaceBand';
-import { NutritionPlan } from './components/NutritionPlan';
-import { ShareCard } from './components/ShareCard';
+import { WallpaperCard } from './components/WallpaperCard';
 import { WeatherPanel } from './components/WeatherPanel';
 
 const RouteMap = lazy(() => import('./components/RouteMap').then(m => ({ default: m.RouteMap })));
@@ -23,9 +21,11 @@ function App() {
   const [gpx, setGpx] = useState<ParsedGpx | null>(null);
   const [currentFile, setCurrentFile] = useState<string | null>(null);
   const [profile, setProfile] = useState<RunnerProfile>(DEFAULT_PROFILE);
-  const [sharing, setSharing] = useState(false);
+  const [generatingWallpaper, setGeneratingWallpaper] = useState(false);
+  const [startTime, setStartTime] = useState('06:00');
+  const [linkCopied, setLinkCopied] = useState(false);
   const hoverStore = useHoverStore();
-  const shareCardRef = useRef<HTMLDivElement>(null);
+  const wallpaperCardRef = useRef<HTMLDivElement>(null);
   const [raceDate, setRaceDate] = useState<string>(() => {
     const d = new Date();
     d.setDate(d.getDate() + ((7 - d.getDay()) % 7 || 7));
@@ -42,19 +42,25 @@ function App() {
     }
   }, []);
 
-  // Auto-load first GPX on mount
+  // Auto-load from share URL or first GPX on mount
   useEffect(() => {
-    const first = gpxFiles[0];
-    if (!first) return;
-    fetch(`/files/${first}`)
+    const shared = decodeShareUrl(window.location.hash);
+    const target = shared?.file && gpxFiles.includes(shared.file) ? shared.file : gpxFiles[0];
+    if (!target) return;
+    fetch(`/files/${target}`)
       .then((r) => {
         if (r.ok) return r.text();
         return null;
       })
       .then((xml) => {
-        if (xml) handleGpxLoad(xml, first);
+        if (xml) {
+          handleGpxLoad(xml, target);
+          if (shared?.itra) setProfile((p) => ({ ...p, itraPoints: shared.itra }));
+        }
       })
       .catch(() => {});
+    // Clear hash after loading so URL stays clean
+    if (shared) history.replaceState(null, '', window.location.pathname);
   }, [handleGpxLoad]);
 
   // Defer heavy computation so UI updates immediately on track switch
@@ -72,34 +78,38 @@ function App() {
     ? analysis.splits[analysis.splits.length - 1].cumulativeTime
     : 0;
 
-  const handleShare = useCallback(async () => {
-    if (!shareCardRef.current || sharing) return;
-    setSharing(true);
-    try {
-      // Small delay for canvas to render
-      await new Promise((r) => requestAnimationFrame(r));
-      const blob = await captureShareCard(shareCardRef.current);
-      await shareImage(blob, raceName);
-    } catch (e) {
-      console.error('Share failed:', e);
-    } finally {
-      setSharing(false);
-    }
-  }, [raceName, sharing]);
+  // Whether current file is a built-in race (shareable)
+  const isBuiltIn = currentFile != null && gpxFiles.includes(currentFile);
 
-  const handleCopyLink = useCallback(() => {
-    if (!analysis) return;
-    const url = encodeShareUrl({
-      name: raceName,
-      dist: analysis.totalDistance,
-      gain: analysis.totalGain,
-      loss: analysis.totalLoss,
-      itra: profile.itraPoints,
-      time: predictedTime,
-      cp: analysis.splits.length,
-    });
-    navigator.clipboard.writeText(url).catch(() => {});
-  }, [analysis, raceName, profile.itraPoints, predictedTime]);
+  const handleShare = useCallback(async () => {
+    if (!currentFile) return;
+    const url = encodeShareUrl({ file: currentFile, itra: profile.itraPoints });
+    // Try Web Share API first (mobile), fallback to clipboard
+    if (typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ title: raceName, url });
+        return;
+      } catch { /* user cancelled or share failed */ }
+    }
+    await navigator.clipboard.writeText(url).catch(() => {});
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  }, [currentFile, raceName, profile.itraPoints]);
+
+  const handleWallpaper = useCallback(async () => {
+    if (!wallpaperCardRef.current || generatingWallpaper) return;
+    setGeneratingWallpaper(true);
+    try {
+      await new Promise((r) => requestAnimationFrame(r));
+      const blob = await captureShareCard(wallpaperCardRef.current);
+      await shareImage(blob, raceName + '_wallpaper');
+    } catch (e) {
+      console.error('Wallpaper generation failed:', e);
+    } finally {
+      setGeneratingWallpaper(false);
+    }
+  }, [raceName, generatingWallpaper]);
+
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -127,6 +137,8 @@ function App() {
                 predictedTime={analysis?.predictedTime ?? null}
                 timeRange={analysis?.timeRange ?? null}
                 onChange={setProfile}
+                startTime={startTime}
+                onStartTimeChange={setStartTime}
               />
             </div>
             <WeatherPanel
@@ -170,9 +182,8 @@ function App() {
                   totalLoss={analysis.totalLoss}
                   predictedTime={predictedTime}
                   cpCount={analysis.splits.length}
-                  onShare={handleShare}
-                  onCopyLink={handleCopyLink}
-                  sharing={sharing}
+                  onShare={isBuiltIn ? handleShare : undefined}
+                  linkCopied={linkCopied}
                 />
                 <Suspense fallback={
                   <div className="bg-white rounded-xl shadow-sm p-5">
@@ -198,35 +209,28 @@ function App() {
                   climbs={analysis.climbs}
                   hoverStore={hoverStore}
                 />
-                <SplitTable splits={analysis.splits} />
-                <NutritionPlan
+                <SplitTable
                   splits={analysis.splits}
-                  weather={weather}
-                  bodyWeightKg={profile.bodyWeightKg}
-                  raceName={raceName}
+                  onWallpaper={handleWallpaper}
+                  generatingWallpaper={generatingWallpaper}
                 />
-                <PaceBand splits={analysis.splits} raceName={raceName} />
               </>
             )}
           </div>
         </div>
       </main>
 
-      {/* Hidden share card for image capture */}
+      {/* Hidden wallpaper card for image capture */}
       {analysis && (
-        <ShareCard
-          ref={shareCardRef}
+        <WallpaperCard
+          ref={wallpaperCardRef}
           raceName={raceName}
           totalDistance={analysis.totalDistance}
           totalGain={analysis.totalGain}
-          totalLoss={analysis.totalLoss}
           predictedTime={predictedTime}
-          cpCount={analysis.splits.length}
-          distanceProfile={analysis.distanceProfile}
-          weather={weather}
           splits={analysis.splits}
-          climbs={analysis.climbs}
-          itraPoints={profile.itraPoints}
+          startTime={startTime}
+          distanceProfile={analysis.distanceProfile}
           trackPoints={gpx!.trackPoints}
           cpMarkers={analysis.cpMarkers}
         />

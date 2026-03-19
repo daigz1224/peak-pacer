@@ -5,6 +5,8 @@ interface Props {
   cpMarkers: { name: string; lat: number; lon: number }[];
   width: number;
   height: number;
+  /** Render only the track line (no background, no markers, no labels) */
+  trackOnly?: boolean;
 }
 
 /**
@@ -12,7 +14,7 @@ interface Props {
  * Renders track polyline + CP markers with no external tile dependencies.
  * Uses Mercator projection with cos(lat) correction for longitude.
  */
-export function RouteMapCanvas({ trackPoints, cpMarkers, width, height }: Props) {
+export function RouteMapCanvas({ trackPoints, cpMarkers, width, height, trackOnly }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -73,9 +75,11 @@ export function RouteMapCanvas({ trackPoints, cpMarkers, width, height }: Props)
     const toX = (lon: number) => offsetX + (lon - minLon) * cosLat * scaleX;
     const toY = (lat: number) => offsetY + (maxLat - lat) * scaleY; // flip Y
 
-    // Background
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(0, 0, width, height);
+    // Background (skip in trackOnly mode for transparent canvas)
+    if (!trackOnly) {
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(0, 0, width, height);
+    }
 
     // Sample track points for performance (max ~500 points)
     const step = Math.max(1, Math.floor(trackPoints.length / 500));
@@ -105,7 +109,8 @@ export function RouteMapCanvas({ trackPoints, cpMarkers, width, height }: Props)
     ctx.lineJoin = 'round';
     ctx.stroke();
 
-    // Draw CP markers
+    // Draw CP markers (skip in trackOnly mode)
+    if (trackOnly) return;
     const cpRadius = 4;
     // Detect start/end overlap (within 12px on canvas)
     const first = cpMarkers[0];

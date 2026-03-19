@@ -8,7 +8,15 @@ interface Props {
   error: string | null;
 }
 
-const YEAR_COLORS = ['#f59e0b', '#3b82f6', '#10b981'];
+/** Map temperature to a color: blue(cold) → green(mild) → amber(warm) → red(hot) */
+function tempColor(temp: number): string {
+  if (temp <= 0) return '#3b82f6';    // blue
+  if (temp <= 10) return '#06b6d4';   // cyan
+  if (temp <= 18) return '#10b981';   // emerald
+  if (temp <= 25) return '#f59e0b';   // amber
+  if (temp <= 32) return '#f97316';   // orange
+  return '#ef4444';                   // red
+}
 
 function windDirectionLabel(deg: number): string {
   const dirs = ['北', '东北', '东', '东南', '南', '西南', '西', '西北'];
@@ -92,7 +100,7 @@ function WeatherContent({ weather }: { weather: WeatherSummary }) {
                       style={{
                         left: `${leftPct}%`,
                         width: `${Math.max(widthPct, 2)}%`,
-                        background: `linear-gradient(to right, ${YEAR_COLORS[i % YEAR_COLORS.length]}88, ${YEAR_COLORS[i % YEAR_COLORS.length]})`,
+                        background: `linear-gradient(to right, ${tempColor(t.low)}, ${tempColor(t.high)})`,
                       }}
                     />
                   </div>

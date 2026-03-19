@@ -48,13 +48,8 @@ export async function shareImage(blob: Blob, raceName: string): Promise<void> {
 }
 
 export interface ShareParams {
-  name: string;
-  dist: number;
-  gain: number;
-  loss: number;
+  file: string; // built-in GPX filename
   itra: number;
-  time: number;
-  cp: number;
 }
 
 /** Encode share params into URL hash */
