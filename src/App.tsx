@@ -107,13 +107,6 @@ function App() {
       ? encodeShareUrl({ file: currentFile!, itra: profile.itraPoints })
       : 'https://peak-pacer.top';
     const text = `⛰️ Peak Pacer · 山野有数\n越野跑配速预测，科学备赛\n${link}`;
-    // Try Web Share API first (mobile), fallback to clipboard
-    if (typeof navigator.share === 'function') {
-      try {
-        await navigator.share({ title: 'Peak Pacer · 山野有数', text });
-        return;
-      } catch { /* user cancelled or share failed */ }
-    }
     await navigator.clipboard.writeText(text).catch(() => {});
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 2000);

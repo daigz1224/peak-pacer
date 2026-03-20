@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import gpxFiles from 'virtual:gpx-files';
 import { SUPPORTED_EXTENSIONS } from '../lib/track-parser';
 import { track } from '../lib/analytics';
@@ -96,21 +96,7 @@ export function FileLoader({ onLoad, currentFile }: FileLoaderProps) {
         赛事轨迹
       </h3>
 
-      <div className="flex flex-col gap-1.5">
-        {gpxFiles.map((name) => (
-          <button
-            key={name}
-            onClick={() => loadDefault(name)}
-            className={`px-3 py-1.5 text-sm text-left rounded-lg transition-colors truncate ${
-              currentFile === name
-                ? 'bg-emerald-600 text-white shadow-sm'
-                : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            {name.replace(/\.(gpx|kml|tcx)$/i, '')}
-          </button>
-        ))}
-      </div>
+      <RaceDropdown currentFile={currentFile} onSelect={loadDefault} />
 
       {/* File upload */}
       <label className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 bg-slate-50 rounded-lg border-2 border-dashed border-slate-300 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/30 transition-colors">
@@ -184,6 +170,73 @@ export function FileLoader({ onLoad, currentFile }: FileLoaderProps) {
           >
             收起
           </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Custom dropdown for built-in races ── */
+function RaceDropdown({ currentFile, onSelect }: { currentFile: string | null; onSelect: (name: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const displayName = currentFile
+    ? currentFile.replace(/\.(gpx|kml|tcx)$/i, '')
+    : '选择内置赛道…';
+
+  return (
+    <div className="relative" ref={ref}>
+      {/* Trigger button */}
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={`w-full flex items-center justify-between pl-3 pr-2.5 py-2 text-sm rounded-lg border transition-colors bg-white cursor-pointer text-left ${
+          open ? 'border-emerald-500 ring-1 ring-emerald-500/20' : 'border-slate-200 hover:border-slate-300'
+        }`}
+      >
+        <span className={`truncate ${currentFile ? 'text-slate-900' : 'text-slate-400'}`}>
+          {displayName}
+        </span>
+        <svg
+          className={`w-4 h-4 text-slate-400 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
+          viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+        >
+          <path d="M4 6l4 4 4-4" />
+        </svg>
+      </button>
+
+      {/* Dropdown panel */}
+      {open && (
+        <div className="absolute z-50 left-0 right-0 mt-1 bg-white rounded-lg border border-slate-200 shadow-lg max-h-64 overflow-y-auto">
+          {gpxFiles.map((name) => {
+            const label = name.replace(/\.(gpx|kml|tcx)$/i, '');
+            const active = name === currentFile;
+            return (
+              <button
+                key={name}
+                type="button"
+                onClick={() => { onSelect(name); setOpen(false); }}
+                className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                  active
+                    ? 'bg-emerald-50 text-emerald-700 font-medium'
+                    : 'text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
