@@ -102,20 +102,22 @@ function App() {
   const isBuiltIn = currentFile != null && gpxFiles.includes(currentFile);
 
   const handleShare = useCallback(async () => {
-    if (!currentFile) return;
     track('share-card', { race: raceName });
-    const url = encodeShareUrl({ file: currentFile, itra: profile.itraPoints });
+    const link = isBuiltIn
+      ? encodeShareUrl({ file: currentFile!, itra: profile.itraPoints })
+      : 'https://peak-pacer.top';
+    const text = `⛰️ Peak Pacer · 山野有数\n越野跑配速预测，科学备赛\n${link}`;
     // Try Web Share API first (mobile), fallback to clipboard
     if (typeof navigator.share === 'function') {
       try {
-        await navigator.share({ title: raceName, url });
+        await navigator.share({ title: 'Peak Pacer · 山野有数', text });
         return;
       } catch { /* user cancelled or share failed */ }
     }
-    await navigator.clipboard.writeText(url).catch(() => {});
+    await navigator.clipboard.writeText(text).catch(() => {});
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 2000);
-  }, [currentFile, raceName, profile.itraPoints]);
+  }, [currentFile, raceName, profile.itraPoints, isBuiltIn]);
 
   const openWallpaperDialog = useCallback(() => {
     setWallpaperDialogOpen(true);
@@ -142,13 +144,15 @@ function App() {
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="bg-gradient-to-r from-slate-900 to-slate-800 sticky top-0 z-[1000] print:hidden">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
-          <svg viewBox="0 0 28 20" className="w-7 h-5 text-emerald-400 shrink-0" fill="currentColor">
-            <path d="M2,20 L7,8 L9,12 L14,2 L19,12 L21,8 L26,20 Z" opacity="0.3" />
-            <path d="M6,20 L10,10 L12,14 L14,6 L16,14 L18,10 L22,20 Z" />
-          </svg>
-          <span className="text-xl font-bold text-white">Peak Pacer</span>
-          <span className="text-sm text-slate-400 hidden sm:inline">山野有数</span>
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <svg viewBox="0 0 28 20" className="w-7 h-5 text-emerald-400 shrink-0" fill="currentColor">
+              <path d="M2,20 L7,8 L9,12 L14,2 L19,12 L21,8 L26,20 Z" opacity="0.3" />
+              <path d="M6,20 L10,10 L12,14 L14,6 L16,14 L18,10 L22,20 Z" />
+            </svg>
+            <span className="text-xl font-bold text-white">Peak Pacer</span>
+          </div>
+          <span className="text-sm text-slate-400">山野有数</span>
         </div>
         <div className="h-0.5 bg-gradient-to-r from-emerald-500/0 via-emerald-500/50 to-emerald-500/0" />
       </header>
@@ -207,7 +211,7 @@ function App() {
                   totalLoss={analysis.totalLoss}
                   predictedTime={predictedTime}
                   cpCount={analysis.splits.length}
-                  onShare={isBuiltIn ? handleShare : undefined}
+                  onShare={handleShare}
                   linkCopied={linkCopied}
                 />
                 <Suspense fallback={
