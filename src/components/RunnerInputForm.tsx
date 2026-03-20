@@ -6,8 +6,6 @@ interface Props {
   predictedTime: number | null;
   timeRange: TimeRange | null;
   onChange: (profile: RunnerProfile) => void;
-  startTime: string;
-  onStartTimeChange: (time: string) => void;
 }
 
 const EMPTY_RACE: HistoricalRace = { distance: 0, elevationGain: 0, finishTime: 0 };
@@ -30,7 +28,7 @@ const STRATEGIES: { key: RaceStrategy; label: string; icon: string }[] = [
   { key: 'conservative', label: '保守', icon: '🛡' },
 ];
 
-export function RunnerInputForm({ profile, predictedTime, timeRange, onChange, startTime, onStartTimeChange }: Props) {
+export function RunnerInputForm({ profile, predictedTime, timeRange, onChange }: Props) {
   const tH = profile.targetTime != null ? Math.floor(profile.targetTime / 60) : 0;
   const tM = profile.targetTime != null ? Math.floor(profile.targetTime % 60) : 0;
   const activeStrategy = profile.strategy ?? 'moderate';
@@ -77,45 +75,6 @@ export function RunnerInputForm({ profile, predictedTime, timeRange, onChange, s
         }
       />
 
-
-      {/* Start time */}
-      <div>
-        <label className="flex items-center gap-1 text-sm text-slate-600 mb-1">
-          <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <circle cx="8" cy="8" r="6.5" />
-            <path d="M8 4v4l2.5 2.5" />
-          </svg>
-          起跑时间
-        </label>
-        <div className="flex items-center gap-1">
-          <input
-            type="number"
-            min={0}
-            max={23}
-            value={parseInt(startTime.split(':')[0], 10)}
-            onChange={(e) => {
-              const h = Math.max(0, Math.min(23, +e.target.value));
-              const m = startTime.split(':')[1];
-              onStartTimeChange(`${h.toString().padStart(2, '0')}:${m}`);
-            }}
-            className={inputClass}
-          />
-          <span className="text-slate-400">:</span>
-          <input
-            type="number"
-            min={0}
-            max={59}
-            step={5}
-            value={parseInt(startTime.split(':')[1], 10)}
-            onChange={(e) => {
-              const h = startTime.split(':')[0];
-              const m = Math.max(0, Math.min(59, +e.target.value));
-              onStartTimeChange(`${h}:${m.toString().padStart(2, '0')}`);
-            }}
-            className={inputClass}
-          />
-        </div>
-      </div>
 
       {/* Race strategy + time range */}
       <div>

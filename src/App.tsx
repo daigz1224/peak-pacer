@@ -8,12 +8,14 @@ import { useWeatherForecast } from './hooks/useWeatherForecast';
 import { useHoverStore } from './hooks/useHoverSync';
 import { captureShareCard, shareImage, encodeShareUrl, decodeShareUrl } from './lib/share';
 import { track } from './lib/analytics';
+import { PHONE_PRESETS, DEFAULT_PHONE_INDEX } from './lib/phone-presets';
 import { FileLoader } from './components/FileLoader';
 import { RunnerInputForm } from './components/RunnerInputForm';
 import { RaceSummary } from './components/RaceSummary';
 import { ElevationProfile } from './components/ElevationProfile';
 import { SplitTable } from './components/SplitTable';
 import { WallpaperCard } from './components/WallpaperCard';
+import { WallpaperSettingsDialog } from './components/WallpaperSettingsDialog';
 import { WeatherPanel } from './components/WeatherPanel';
 
 const RouteMap = lazy(() => import('./components/RouteMap').then(m => ({ default: m.RouteMap })));
@@ -23,7 +25,10 @@ function App() {
   const [currentFile, setCurrentFile] = useState<string | null>(null);
   const [profile, setProfile] = useState<RunnerProfile>(DEFAULT_PROFILE);
   const [generatingWallpaper, setGeneratingWallpaper] = useState(false);
+  const [wallpaperDialogOpen, setWallpaperDialogOpen] = useState(false);
   const [startTime, setStartTime] = useState('06:00');
+  const [nickname, setNickname] = useState('');
+  const [phoneSize, setPhoneSize] = useState(PHONE_PRESETS[DEFAULT_PHONE_INDEX]);
   const [linkCopied, setLinkCopied] = useState(false);
   const hoverStore = useHoverStore();
   const wallpaperCardRef = useRef<HTMLDivElement>(null);
@@ -112,9 +117,13 @@ function App() {
     setTimeout(() => setLinkCopied(false), 2000);
   }, [currentFile, raceName, profile.itraPoints]);
 
-  const handleWallpaper = useCallback(async () => {
+  const openWallpaperDialog = useCallback(() => {
+    setWallpaperDialogOpen(true);
+  }, []);
+
+  const handleWallpaperConfirm = useCallback(async () => {
     if (!wallpaperCardRef.current || generatingWallpaper) return;
-    track('export-paceband', { race: raceName });
+    track('export-paceband', { race: raceName, phone: phoneSize.label, nickname: nickname || 'none' });
     setGeneratingWallpaper(true);
     try {
       await new Promise((r) => requestAnimationFrame(r));
@@ -124,8 +133,9 @@ function App() {
       console.error('Wallpaper generation failed:', e);
     } finally {
       setGeneratingWallpaper(false);
+      setWallpaperDialogOpen(false);
     }
-  }, [raceName, generatingWallpaper]);
+  }, [raceName, generatingWallpaper, phoneSize, nickname]);
 
 
   return (
@@ -154,8 +164,6 @@ function App() {
                 predictedTime={analysis?.predictedTime ?? null}
                 timeRange={analysis?.timeRange ?? null}
                 onChange={setProfile}
-                startTime={startTime}
-                onStartTimeChange={setStartTime}
               />
             </div>
             <WeatherPanel
@@ -228,7 +236,7 @@ function App() {
                 />
                 <SplitTable
                   splits={analysis.splits}
-                  onWallpaper={handleWallpaper}
+                  onWallpaper={openWallpaperDialog}
                   generatingWallpaper={generatingWallpaper}
                   autoCp={analysis.autoCp}
                 />
@@ -251,8 +259,26 @@ function App() {
           distanceProfile={analysis.distanceProfile}
           trackPoints={gpx!.trackPoints}
           cpMarkers={analysis.cpMarkers}
+          nickname={nickname}
+          cardWidth={phoneSize.width}
+          cardHeight={phoneSize.height}
+          safeAreaTop={phoneSize.safeAreaTop}
         />
       )}
+
+      {/* Wallpaper settings dialog */}
+      <WallpaperSettingsDialog
+        open={wallpaperDialogOpen}
+        onClose={() => setWallpaperDialogOpen(false)}
+        onConfirm={handleWallpaperConfirm}
+        generating={generatingWallpaper}
+        phoneSize={phoneSize}
+        onPhoneSizeChange={setPhoneSize}
+        nickname={nickname}
+        onNicknameChange={setNickname}
+        startTime={startTime}
+        onStartTimeChange={setStartTime}
+      />
 
       <footer className="max-w-6xl mx-auto px-4 py-6 text-center print:hidden">
         <p className="text-xs text-slate-400 italic">

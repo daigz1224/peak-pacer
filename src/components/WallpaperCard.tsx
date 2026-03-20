@@ -15,6 +15,10 @@ interface Props {
   distanceProfile: { distance: number; elevation: number }[];
   trackPoints: { lat: number; lon: number }[];
   cpMarkers: { name: string; lat: number; lon: number }[];
+  nickname?: string;
+  cardWidth?: number;
+  cardHeight?: number;
+  safeAreaTop?: number;
 }
 
 function formatTime(minutes: number): string {
@@ -33,14 +37,14 @@ function adaptiveNameSize(name: string): number {
 
 export const WallpaperCard = forwardRef<HTMLDivElement, Props>(
   (props, ref) => {
-    const { raceName, totalDistance, totalGain, predictedTime, splits, startTime, distanceProfile, trackPoints, cpMarkers } = props;
+    const { raceName, totalDistance, totalGain, predictedTime, splits, startTime, distanceProfile, trackPoints, cpMarkers, nickname, cardWidth, cardHeight, safeAreaTop } = props;
 
-    // iPhone 17: 1206×2622 native, DPR 3x → base 402×874
-    const CARD_W = 402;
-    const CARD_H = 874;
+    const CARD_W = cardWidth ?? 402;
+    const CARD_H = cardHeight ?? 874;
+    const heightScale = Math.min(1, CARD_H / 874);
     const PAD_X = 24;
-    const PAD_TOP = 44;
-    const PAD_BOTTOM = 24;
+    const PAD_TOP = (safeAreaTop ?? 59) + 6; // safe area + 6px breathing room
+    const PAD_BOTTOM = Math.round(24 * heightScale);
     const CONTENT_W = CARD_W - PAD_X * 2;
 
     // Adaptive font size for CP table based on count
@@ -52,8 +56,8 @@ export const WallpaperCard = forwardRef<HTMLDivElement, Props>(
     const nameFontSize = adaptiveNameSize(raceName);
     const dotColors = difficultyColors(splits);
 
-    // Background contour lines SVG (subtle mountain texture)
-    const contourSvg = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='402' height='874' fill='none'%3E%3Cpath d='M0 760 Q80 720 160 740 T320 730 T402 750' stroke='%231e293b' stroke-width='0.8'/%3E%3Cpath d='M0 780 Q100 750 200 770 T402 760' stroke='%231e293b' stroke-width='0.6'/%3E%3Cpath d='M0 800 Q120 775 240 790 T402 785' stroke='%231e293b' stroke-width='0.5'/%3E%3Cpath d='M0 820 Q90 800 180 815 T360 808 T402 810' stroke='%231e293b' stroke-width='0.4'/%3E%3Cpath d='M0 840 Q130 825 260 835 T402 830' stroke='%231e293b' stroke-width='0.3'/%3E%3C/svg%3E")`;
+    // Background contour lines SVG (subtle mountain texture) — uses viewBox so it scales to any card size
+    const contourSvg = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 402 874' fill='none'%3E%3Cpath d='M0 760 Q80 720 160 740 T320 730 T402 750' stroke='%231e293b' stroke-width='0.8'/%3E%3Cpath d='M0 780 Q100 750 200 770 T402 760' stroke='%231e293b' stroke-width='0.6'/%3E%3Cpath d='M0 800 Q120 775 240 790 T402 785' stroke='%231e293b' stroke-width='0.5'/%3E%3Cpath d='M0 820 Q90 800 180 815 T360 808 T402 810' stroke='%231e293b' stroke-width='0.4'/%3E%3Cpath d='M0 840 Q130 825 260 835 T402 830' stroke='%231e293b' stroke-width='0.3'/%3E%3C/svg%3E")`;
 
     return (
       <div
@@ -81,6 +85,7 @@ export const WallpaperCard = forwardRef<HTMLDivElement, Props>(
           backgroundImage: contourSvg,
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'bottom',
+          backgroundSize: '100% auto',
           opacity: 0.6,
           pointerEvents: 'none' as const,
         }} />
@@ -106,7 +111,18 @@ export const WallpaperCard = forwardRef<HTMLDivElement, Props>(
             </svg>
             <span style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0', letterSpacing: 0.5 }}>Peak Pacer</span>
           </div>
-          <span style={{ fontSize: 16, fontWeight: 700, color: '#64748b', letterSpacing: 0.5 }}>山野有数</span>
+          <span style={{
+            fontSize: 16,
+            fontWeight: 700,
+            color: nickname ? '#e2e8f0' : '#64748b',
+            letterSpacing: 0.5,
+            maxWidth: CONTENT_W * 0.5,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap' as const,
+          }}>
+            {nickname || '山野有数'}
+          </span>
         </div>
 
         {/* Race name — single line, adaptive size */}
@@ -249,7 +265,7 @@ export const WallpaperCard = forwardRef<HTMLDivElement, Props>(
           <ElevationSilhouette
             data={distanceProfile}
             width={CONTENT_W}
-            height={80}
+            height={Math.round(80 * heightScale)}
             theme="dark"
             cpMarkers={splits.map(s => ({ distance: s.cumulativeDistance, name: s.cpName }))}
           />
