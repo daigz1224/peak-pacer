@@ -2,6 +2,29 @@
   command = "npm run build"
   publish = "dist"
 
+[[redirects]]
+  from = "http://peak-pacer.top/*"
+  to = "https://peak-pacer.top/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "http://www.peak-pacer.top/*"
+  to = "https://peak-pacer.top/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://www.peak-pacer.top/*"
+  to = "https://peak-pacer.top/:splat"
+  status = 301
+  force = true
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+
 [[headers]]
   for = "/assets/*.js"
   [headers.values]
