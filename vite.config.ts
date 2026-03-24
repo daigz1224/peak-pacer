@@ -5,6 +5,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 import type { ViteDevServer } from 'vite'
 
+import { cloudflare } from "@cloudflare/vite-plugin";
+
 // Supported track file extensions (case-insensitive)
 const TRACK_EXTS = ['.gpx', '.kml', '.tcx']
 function isTrackFile(name: string): boolean {
@@ -48,5 +50,5 @@ function gpxManifestPlugin() {
 }
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), gpxManifestPlugin()],
+  plugins: [react(), tailwindcss(), gpxManifestPlugin(), cloudflare()],
 })
