@@ -1,5 +1,5 @@
 import type { Segment, RunnerProfile, CpSplit, HistoricalRace, RaceStrategy, TimeRange } from '../types';
-import { haversineDistance, smoothElevations, gradientEffortFactor } from './geo';
+import { haversineDistance, smoothElevations, adaptiveWindowSize, gradientEffortFactor } from './geo';
 
 /**
  * Convert ITRA Performance Index to flat-trail base speed (m/s).
@@ -99,30 +99,48 @@ function resolveITRA(profile: RunnerProfile): number {
 }
 
 /**
- * Ultra fatigue factor: beyond marathon distance, pace degrades progressively.
- * Uses segment midpoint distance. Calibrated against real ITRA-500 race data:
- * short races (<42km) have no fatigue, ultra races see significant slowdown.
- *   42km → 1.00, 50km → 1.14, 60km → 1.32, 80km → 1.72, 100km → 2.18
+ * Progressive fatigue factor based on race progress.
+ *
+ * Fatigue is modelled as a power-law of normalised distance so that:
+ *   - Every segment sees *some* fatigue (no artificial 42 km cliff)
+ *   - Later segments accumulate more, matching real-world ultra pacing
+ *   - The shape scales naturally to any total distance
+ *
+ * Because the final times are always rescaled to the target finish time,
+ * this factor only controls the *distribution* between segments, not the
+ * absolute total.
+ *
+ * k = 0.5 → end-of-race fatigue is 50% above start
+ * p = 1.6 → mildly convex (back-loaded, but not a cliff)
+ *
+ * Examples for a 100 km race:
+ *   10 km → 1.01,  25 km → 1.05,  50 km → 1.17,
+ *   75 km → 1.34, 100 km → 1.50
  */
-function fatigueFactor(seg: Segment): number {
+function fatigueFactor(seg: Segment, totalDistance: number): number {
   const midpoint = seg.cumulativeDistance - seg.distance / 2;
-  const x = Math.max(0, midpoint - 42.195);
-  return 1 + x * 0.022 + x * x * 0.00018;
+  const ratio = totalDistance > 0 ? midpoint / totalDistance : 0;
+  return 1 + 0.5 * Math.pow(ratio, 1.6);
 }
 
 /**
  * Compute segment time bottom-up from track points.
  * ITRA base speed is applied to each micro-segment, adjusted by
- * gradient effort factor and ultra fatigue.
+ * gradient effort factor and progressive fatigue.
  *
  * This makes ITRA directly drive the pace at every point on the course,
  * rather than only controlling the total time envelope.
  */
-function computeSegmentTime(seg: Segment, baseSpeedMs: number): number {
+function computeSegmentTime(
+  seg: Segment,
+  baseSpeedMs: number,
+  totalDistance: number,
+): number {
   const points = seg.trackPoints;
   if (points.length < 2) return 0;
 
-  const eles = smoothElevations(points);
+  const windowSize = adaptiveWindowSize(points);
+  const eles = smoothElevations(points, windowSize);
   let totalSec = 0;
 
   for (let i = 1; i < points.length; i++) {
@@ -134,8 +152,8 @@ function computeSegmentTime(seg: Segment, baseSpeedMs: number): number {
     totalSec += (horizDist * factor) / baseSpeedMs;
   }
 
-  // Apply ultra fatigue (now affects total time, not just distribution)
-  return (totalSec / 60) * fatigueFactor(seg);
+  // Apply progressive fatigue
+  return (totalSec / 60) * fatigueFactor(seg, totalDistance);
 }
 
 /**
@@ -150,9 +168,10 @@ export function computeSplits(
 ): CpSplit[] {
   const effectivePI = resolveITRA(profile);
   const baseSpeed = itraToBaseSpeed(effectivePI);
+  const totalDistance = segments[segments.length - 1]?.cumulativeDistance ?? 0;
 
   // Bottom-up: compute each segment's raw time
-  const rawTimes = segments.map((seg) => computeSegmentTime(seg, baseSpeed));
+  const rawTimes = segments.map((seg) => computeSegmentTime(seg, baseSpeed, totalDistance));
   const rawTotal = rawTimes.reduce((a, b) => a + b, 0);
 
   // Scale to target time if provided, otherwise apply strategy factor
@@ -187,8 +206,9 @@ export function predictFinishTime(
 ): number {
   const effectivePI = resolveITRA(profile);
   const baseSpeed = itraToBaseSpeed(effectivePI);
+  const totalDistance = segments[segments.length - 1]?.cumulativeDistance ?? 0;
   return segments.reduce(
-    (sum, seg) => sum + computeSegmentTime(seg, baseSpeed),
+    (sum, seg) => sum + computeSegmentTime(seg, baseSpeed, totalDistance),
     0,
   );
 }

@@ -1,5 +1,5 @@
 import type { GpxPoint, GpxWaypoint, Segment } from '../types';
-import { haversineDistance, computeSegmentStats, computeEquivalentFlatKm } from './geo';
+import { haversineDistance, computeSegmentStats, computeEquivalentFlatKm, smoothElevations, adaptiveWindowSize } from './geo';
 
 interface CpAnchor {
   name: string;
@@ -97,6 +97,10 @@ export function computeSegments(
     }
   }
 
+  // Pre-compute smoothed elevations for the whole track to avoid boundary artefacts
+  const windowSize = adaptiveWindowSize(trackPoints);
+  const allSmoothed = smoothElevations(trackPoints, windowSize);
+
   // Build segments between consecutive CPs
   let cumulativeDist = 0;
   const segments: Segment[] = [];
@@ -105,8 +109,9 @@ export function computeSegments(
     const startIdx = uniqueAnchors[i].trackIndex;
     const endIdx = uniqueAnchors[i + 1].trackIndex;
     const slice = trackPoints.slice(startIdx, endIdx + 1);
-    const stats = computeSegmentStats(slice);
-    const eqFlat = computeEquivalentFlatKm(slice);
+    const smoothedSlice = allSmoothed.slice(startIdx, endIdx + 1);
+    const stats = computeSegmentStats(slice, smoothedSlice);
+    const eqFlat = computeEquivalentFlatKm(slice, smoothedSlice);
 
     cumulativeDist += stats.distance;
 

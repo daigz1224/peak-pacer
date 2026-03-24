@@ -2,6 +2,12 @@ import type { GpxPoint, Climb } from '../types';
 
 const R = 6371000; // Earth radius in meters
 
+/**
+ * Target physical distance (meters) for elevation smoothing window.
+ * ~50 m matches DEM resolution and filters GPS noise without losing real features.
+ */
+const SMOOTH_DISTANCE_M = 50;
+
 export function haversineDistance(a: GpxPoint, b: GpxPoint): number {
   const toRad = (d: number) => (d * Math.PI) / 180;
   const dLat = toRad(b.lat - a.lat);
@@ -33,15 +39,42 @@ export function smoothElevations(
   });
 }
 
-/** Compute cumulative distance (km), gain (m), loss (m) for a slice of track points */
-export function computeSegmentStats(points: GpxPoint[]): {
+/** Calculate adaptive smoothing window size based on track point density */
+export function adaptiveWindowSize(points: GpxPoint[]): number {
+  if (points.length < 10) return 5;
+  // Sample ~1000 consecutive-point pairs to estimate average spacing.
+  // Must use consecutive pairs — skipping points would measure straight-line
+  // distance across curves and underestimate actual spacing.
+  const step = Math.max(1, Math.floor(points.length / 1000));
+  let totalDist = 0;
+  let samples = 0;
+  for (let i = step; i < points.length; i += step) {
+    totalDist += haversineDistance(points[i - 1], points[i]);
+    samples++;
+  }
+  const avgSpacing = totalDist / samples; // meters between consecutive points
+  const raw = Math.round(SMOOTH_DISTANCE_M / avgSpacing);
+  // Ensure odd (symmetric window) and minimum 5
+  const odd = raw % 2 === 0 ? raw + 1 : raw;
+  return Math.max(5, odd);
+}
+
+/**
+ * Compute cumulative distance (km), gain (m), loss (m) for a slice of track points.
+ * When preSmoothed is provided (from whole-track smoothing), uses it directly
+ * to avoid boundary artefacts at segment edges.
+ */
+export function computeSegmentStats(
+  points: GpxPoint[],
+  preSmoothed?: number[],
+): {
   distance: number;
   elevationGain: number;
   elevationLoss: number;
 } {
   if (points.length < 2) return { distance: 0, elevationGain: 0, elevationLoss: 0 };
 
-  const smoothed = smoothElevations(points);
+  const smoothed = preSmoothed ?? smoothElevations(points, adaptiveWindowSize(points));
   let distance = 0;
   let gain = 0;
   let loss = 0;
@@ -86,10 +119,13 @@ export function gradientEffortFactor(gradient: number): number {
  * Compute equivalent flat distance for a track segment by walking point-by-point.
  * Uses smoothed elevations to avoid GPS noise, then applies gradient-based effort.
  */
-export function computeEquivalentFlatKm(points: GpxPoint[]): number {
+export function computeEquivalentFlatKm(
+  points: GpxPoint[],
+  preSmoothed?: number[],
+): number {
   if (points.length < 2) return 0;
 
-  const smoothed = smoothElevations(points);
+  const smoothed = preSmoothed ?? smoothElevations(points, adaptiveWindowSize(points));
   let eqFlat = 0;
 
   for (let i = 1; i < points.length; i++) {
