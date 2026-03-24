@@ -1,18 +1,28 @@
 import html2canvas from 'html2canvas-pro';
 
-/** Capture a DOM element as a PNG blob */
+/** Capture a DOM element as a PNG blob (with timeout for iOS safety) */
 export async function captureShareCard(element: HTMLElement): Promise<Blob> {
-  const canvas = await html2canvas(element, {
-    scale: 3,
-    useCORS: true,
-    backgroundColor: null,
-  });
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new Error('Canvas toBlob failed'))),
-      'image/png',
-    );
-  });
+  const TIMEOUT_MS = 15_000;
+
+  const capture = async (): Promise<Blob> => {
+    const canvas = await html2canvas(element, {
+      scale: 3,
+      useCORS: true,
+      backgroundColor: null,
+    });
+    return new Promise((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => (blob ? resolve(blob) : reject(new Error('Canvas toBlob failed'))),
+        'image/png',
+      );
+    });
+  };
+
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('壁纸生成超时，请稍后重试')), TIMEOUT_MS),
+  );
+
+  return Promise.race([capture(), timeout]);
 }
 
 /** Trigger download of a blob as a file */

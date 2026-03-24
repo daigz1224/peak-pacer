@@ -76,7 +76,11 @@ export const WallpaperCard = forwardRef<HTMLDivElement, Props>(
           boxSizing: 'border-box',
           display: 'flex',
           flexDirection: 'column' as const,
-        }}
+          // Prevent iOS large-text accessibility from scaling content,
+          // which would inflate the canvas beyond Safari memory limits.
+          WebkitTextSizeAdjust: '100%',
+          textSizeAdjust: '100%',
+        } as React.CSSProperties}
       >
         {/* Background contour texture */}
         <div style={{

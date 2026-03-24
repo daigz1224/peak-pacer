@@ -126,6 +126,7 @@ function App() {
       await shareImage(blob, raceName + '_wallpaper');
     } catch (e) {
       console.error('Wallpaper generation failed:', e);
+      alert(e instanceof Error ? e.message : '壁纸生成失败，请稍后重试');
     } finally {
       setGeneratingWallpaper(false);
       setWallpaperDialogOpen(false);
