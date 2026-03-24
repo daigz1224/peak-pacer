@@ -1,9 +1,19 @@
-import { forwardRef } from 'react';
+import { forwardRef, useMemo } from 'react';
 import type { CpSplit } from '../types';
 import { ElevationSilhouette } from './ElevationSilhouette';
 import { RouteMapCanvas } from './RouteMapCanvas';
 import { formatClockTime } from '../lib/time-utils';
 import { difficultyColors } from '../lib/difficulty';
+
+/** Downsample an array to at most `max` evenly-spaced items (always keeping last) */
+function downsample<T>(arr: T[], max: number): T[] {
+  if (arr.length <= max) return arr;
+  const step = Math.max(1, Math.floor(arr.length / max));
+  const result: T[] = [];
+  for (let i = 0; i < arr.length; i += step) result.push(arr[i]);
+  if (result[result.length - 1] !== arr[arr.length - 1]) result.push(arr[arr.length - 1]);
+  return result;
+}
 
 interface Props {
   raceName: string;
@@ -38,6 +48,10 @@ function adaptiveNameSize(name: string): number {
 export const WallpaperCard = forwardRef<HTMLDivElement, Props>(
   (props, ref) => {
     const { raceName, totalDistance, totalGain, predictedTime, splits, startTime, distanceProfile, trackPoints, cpMarkers, nickname, cardWidth, cardHeight, safeAreaTop } = props;
+
+    // Cap to 500 points — the wallpaper map doesn't need full-resolution tracks,
+    // and passing 50K+ points through the DOM can choke html2canvas on iOS.
+    const sampledTrack = useMemo(() => downsample(trackPoints, 500), [trackPoints]);
 
     const CARD_W = cardWidth ?? 402;
     const CARD_H = cardHeight ?? 874;
@@ -172,7 +186,7 @@ export const WallpaperCard = forwardRef<HTMLDivElement, Props>(
         <div style={{ flex: 1, marginBottom: 8, display: 'flex', flexDirection: 'column' as const, position: 'relative' as const }}>
           {/* Route map as background */}
           <div style={{ position: 'absolute', inset: 0, opacity: 0.12, pointerEvents: 'none' as const }}>
-            <RouteMapCanvas trackPoints={trackPoints} cpMarkers={cpMarkers} width={CONTENT_W} height={500} trackOnly />
+            <RouteMapCanvas trackPoints={sampledTrack} cpMarkers={cpMarkers} width={CONTENT_W} height={500} trackOnly />
           </div>
           {/* Table header */}
           <div style={{
