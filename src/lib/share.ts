@@ -1,39 +1,58 @@
 import html2canvas from 'html2canvas-pro';
 
-/** Capture a DOM element as a PNG blob (with timeout for iOS safety) */
+/**
+ * Capture a DOM element as a PNG blob.
+ *
+ * Strategy: try scale 3 first (best quality).  If it times out — which can
+ * happen on iOS when accessibility text-scaling inflates the canvas beyond
+ * Safari's memory budget — automatically retry at scale 2.
+ */
 export async function captureShareCard(element: HTMLElement): Promise<Blob> {
-  const TIMEOUT_MS = 15_000;
-
-  // Detect iOS accessibility text-scaling: compare actual rendered size
-  // to the CSS-specified size.  If inflated >10 %, lower the capture
-  // scale so the canvas stays within Safari's memory budget (~4-5 MP).
   const cssW = parseFloat(element.style.width) || 402;
   const cssH = parseFloat(element.style.height) || 874;
-  const rect = element.getBoundingClientRect();
-  const inflation = Math.max(rect.width / cssW, rect.height / cssH);
-  const scale = inflation > 1.1 ? 2 : 3;
 
-  const capture = async (): Promise<Blob> => {
-    const canvas = await html2canvas(element, {
-      scale,
-      useCORS: true,
-      backgroundColor: null,
-      width: cssW,
-      height: cssH,
-    });
-    return new Promise((resolve, reject) => {
-      canvas.toBlob(
-        (blob) => (blob ? resolve(blob) : reject(new Error('Canvas toBlob failed'))),
-        'image/png',
-      );
-    });
-  };
+  for (const [scale, timeoutMs] of [[3, 8_000], [2, 12_000]] as const) {
+    try {
+      const blob = await Promise.race([
+        captureAtScale(element, scale, cssW, cssH),
+        rejectAfter(timeoutMs),
+      ]);
+      return blob;
+    } catch {
+      if (scale <= 2) {
+        throw new Error('壁纸生成失败，请关闭部分后台应用后重试');
+      }
+      // scale 3 failed → fall through to retry at scale 2
+    }
+  }
+  throw new Error('壁纸生成失败');
+}
 
-  const timeout = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error('壁纸生成超时，请稍后重试')), TIMEOUT_MS),
+async function captureAtScale(
+  element: HTMLElement,
+  scale: number,
+  width: number,
+  height: number,
+): Promise<Blob> {
+  const canvas = await html2canvas(element, {
+    scale,
+    useCORS: true,
+    backgroundColor: null,
+    width,
+    height,
+  });
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error('Canvas toBlob failed'))),
+      'image/png',
+    );
+  });
+}
+
+function rejectAfter(ms: number): Promise<never> {
+  return new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('timeout')), ms),
   );
-
-  return Promise.race([capture(), timeout]);
 }
 
 /** Trigger download of a blob as a file */
