@@ -4,11 +4,22 @@ import html2canvas from 'html2canvas-pro';
 export async function captureShareCard(element: HTMLElement): Promise<Blob> {
   const TIMEOUT_MS = 15_000;
 
+  // Detect iOS accessibility text-scaling: compare actual rendered size
+  // to the CSS-specified size.  If inflated >10 %, lower the capture
+  // scale so the canvas stays within Safari's memory budget (~4-5 MP).
+  const cssW = parseFloat(element.style.width) || 402;
+  const cssH = parseFloat(element.style.height) || 874;
+  const rect = element.getBoundingClientRect();
+  const inflation = Math.max(rect.width / cssW, rect.height / cssH);
+  const scale = inflation > 1.1 ? 2 : 3;
+
   const capture = async (): Promise<Blob> => {
     const canvas = await html2canvas(element, {
-      scale: 3,
+      scale,
       useCORS: true,
       backgroundColor: null,
+      width: cssW,
+      height: cssH,
     });
     return new Promise((resolve, reject) => {
       canvas.toBlob(
